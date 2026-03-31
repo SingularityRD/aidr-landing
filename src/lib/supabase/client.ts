@@ -4,6 +4,13 @@ import { createClient } from "@supabase/supabase-js";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string | undefined;
 
+// Build-time diagnostic logging (only runs during build or when explicitly debugging)
+if (typeof window === 'undefined' && process.env.DEBUG_SUPABASE) {
+	console.log('[Supabase Client] URL exists:', !!url);
+	console.log('[Supabase Client] Anon Key exists:', !!anonKey);
+	console.log('[Supabase Client] URL value:', url ? `${url.substring(0, 20)}...` : 'undefined');
+}
+
 export const supabaseEnvError =
 	!url || !anonKey
 		? "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. Create a .env.local file for the landing app."
