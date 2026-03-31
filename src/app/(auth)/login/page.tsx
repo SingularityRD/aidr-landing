@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { setClientPostAuthReturnTo } from "@/lib/auth/return-to-client";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Turnstile, useTurnstile } from "@/components/Turnstile";
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +95,8 @@ const dividerLineStyle: React.CSSProperties = {
 /* ── Google icon SVG ── */
 function GoogleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
+    <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }} aria-label="Google">
+      <title>Google</title>
       <path
         fill="#EA4335"
         d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
@@ -115,12 +117,27 @@ function GoogleIcon() {
   );
 }
 
+/* ── GitHub icon SVG ── */
+function GitHubIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }} aria-label="GitHub">
+      <title>GitHub</title>
+      <path
+        fill="currentColor"
+        d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+      />
+    </svg>
+  );
+}
+
 function LoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  const { token: captchaToken, isVerified: captchaVerified, handleVerify: handleCaptchaVerify, handleError: handleCaptchaError } = useTurnstile();
 
   const trimmedEmail = useMemo(() => email.trim(), [email]);
   const returnTo = searchParams.get("returnTo")?.trim() ?? "";
@@ -154,13 +171,54 @@ function LoginForm() {
           redirectTo,
         },
       });
-      if (error) setStatus(error.message);
+      if (error) {
+        if (error.message.includes("Unsupported provider")) {
+          setStatus(
+            "Google OAuth is not enabled in Supabase. Please enable it in Supabase Dashboard → Authentication → Providers → Google."
+          );
+        } else {
+          setStatus(error.message);
+        }
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleGitHubSignIn = async () => {
+    setBusy(true);
+    setStatus(null);
+    try {
+      if (returnTo) setClientPostAuthReturnTo(returnTo);
+
+      const supabase = getSupabaseBrowserClient();
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "github",
+        options: {
+          redirectTo,
+        },
+      });
+      if (error) {
+        if (error.message.includes("Unsupported provider")) {
+          setStatus(
+            "GitHub OAuth is not enabled in Supabase. Please enable it in Supabase Dashboard → Authentication → Providers → GitHub."
+          );
+        } else {
+          setStatus(error.message);
+        }
+      }
     } finally {
       setBusy(false);
     }
   };
 
   const handleMagicLink = async () => {
+    if (!captchaVerified) {
+      setStatus("Please complete the CAPTCHA verification first.");
+      return;
+    }
+    
     setBusy(true);
     setStatus(null);
     try {
@@ -170,7 +228,10 @@ function LoginForm() {
       const redirectTo = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmedEmail,
-        options: { emailRedirectTo: redirectTo },
+        options: { 
+          emailRedirectTo: redirectTo,
+          captchaToken: captchaToken || undefined,
+        },
       });
       if (error) {
         setStatus(error.message);
@@ -279,6 +340,25 @@ function LoginForm() {
         Continue with Google
       </button>
 
+      {/* GitHub button */}
+      <button
+        type="button"
+        disabled={busy}
+        onClick={handleGitHubSignIn}
+        style={{
+          ...btnSecondary,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
+          marginTop: 10,
+          opacity: busy ? 0.6 : 1,
+        }}
+      >
+        <GitHubIcon />
+        Continue with GitHub
+      </button>
+
       {/* Divider */}
       <div style={dividerStyle}>
         <div style={dividerLineStyle} />
@@ -288,8 +368,9 @@ function LoginForm() {
 
       {/* Email field */}
       <div style={{ marginBottom: 14 }}>
-        <label style={labelStyle}>Email address</label>
+        <label htmlFor="email" style={labelStyle}>Email address</label>
         <input
+          id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -305,16 +386,22 @@ function LoginForm() {
         />
       </div>
 
+      {/* CAPTCHA - Bot Protection */}
+      <Turnstile 
+        onVerify={handleCaptchaVerify} 
+        onError={handleCaptchaError}
+      />
+
       {/* Action buttons */}
       <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
         <button
           type="button"
-          disabled={busy || !trimmedEmail}
+          disabled={busy || !trimmedEmail || !captchaVerified}
           onClick={handleMagicLink}
           style={{
             ...btnSecondary,
             flex: 1,
-            opacity: busy || !trimmedEmail ? 0.45 : 1,
+            opacity: busy || !trimmedEmail || !captchaVerified ? 0.45 : 1,
           }}
         >
           Send magic link
