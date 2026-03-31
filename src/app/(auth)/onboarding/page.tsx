@@ -355,6 +355,16 @@ export default function OnboardingPage() {
                       View incidents
                     </Link>
                   </div>
+                  <div className="row" style={{ marginTop: 12 }}>
+                    <a 
+                      className="button" 
+                      href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open Full Dashboard →
+                    </a>
+                  </div>
                 </div>
               ) : null}
             </div>
