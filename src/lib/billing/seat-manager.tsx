@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getFirebaseBrowserClient } from "@/lib/firebase/database-client";
 import { createCheckout, USD_PER_EXTRA_AGENT_PER_MONTH } from "./lemon-client";
 
 interface Seat {
@@ -44,7 +45,11 @@ export function SeatManager({
   const [localSeats, setLocalSeats] = useState<Seat[]>(seats);
 
   useEffect(() => {
-    setLocalSeats(seats);
+    const frame = requestAnimationFrame(() => {
+      setLocalSeats(seats);
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, [seats]);
 
   async function addSeat() {
@@ -75,12 +80,16 @@ export function SeatManager({
   }
 
   async function pauseSeat(seatId: string) {
-    // Call API to pause seat
     try {
-      const response = await fetch(`/api/seats/${seatId}/pause`, {
+      const firebase = getFirebaseBrowserClient();
+      const res = await firebase.functions.invoke("seat-update", {
         method: "POST",
+        body: {
+          id: seatId,
+          mutation: { status: "paused" },
+        },
       });
-      if (!response.ok) throw new Error("Failed to pause seat");
+      if (res.error) throw new Error(res.error.message);
 
       setLocalSeats((prev) =>
         prev.map((s) => (s.id === seatId ? { ...s, status: "paused" } : s))
@@ -93,10 +102,15 @@ export function SeatManager({
 
   async function resumeSeat(seatId: string) {
     try {
-      const response = await fetch(`/api/seats/${seatId}/resume`, {
+      const firebase = getFirebaseBrowserClient();
+      const res = await firebase.functions.invoke("seat-update", {
         method: "POST",
+        body: {
+          id: seatId,
+          mutation: { status: "active" },
+        },
       });
-      if (!response.ok) throw new Error("Failed to resume seat");
+      if (res.error) throw new Error(res.error.message);
 
       setLocalSeats((prev) =>
         prev.map((s) => (s.id === seatId ? { ...s, status: "active" } : s))
@@ -111,10 +125,15 @@ export function SeatManager({
     if (!confirm("Are you sure you want to delete this seat?")) return;
 
     try {
-      const response = await fetch(`/api/seats/${seatId}`, {
-        method: "DELETE",
+      const firebase = getFirebaseBrowserClient();
+      const res = await firebase.functions.invoke("seat-update", {
+        method: "POST",
+        body: {
+          id: seatId,
+          mutation: { status: "deleted" },
+        },
       });
-      if (!response.ok) throw new Error("Failed to delete seat");
+      if (res.error) throw new Error(res.error.message);
 
       setLocalSeats((prev) => prev.filter((s) => s.id !== seatId));
       onSeatUpdate?.();

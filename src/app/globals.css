@@ -258,9 +258,55 @@ label,
     line-height: 48px !important;
   }
 
-  .site-footer {
-    padding: 40px 60px !important;
-  }
+.site-footer {
+  padding: 40px 20px !important;
+}
+
+/* Landing page enhancements */
+.page-main a:hover {
+  opacity: 0.85;
+}
+
+.page-main details[open] {
+  border-color: var(--text-primary) !important;
+}
+
+.page-main details summary::-webkit-details-marker {
+  display: none;
+}
+
+.page-main details summary::before {
+  content: "▶";
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 10px;
+  color: var(--text-faint);
+  transition: transform 0.2s;
+}
+
+.page-main details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.page-main .accent-gradient {
+  background: linear-gradient(135deg, #3862e8, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Platform cards hover */
+.page-main .platforms-grid article:hover {
+  border-color: var(--text-primary) !important;
+  box-shadow: 0 4px 16px var(--shadow-color) !important;
+}
+
+/* Pricing card hover */
+.page-main [id="pricing"] article:hover {
+  border-color: var(--text-primary) !important;
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
+}
 }
 
 @media (max-width: 768px) {

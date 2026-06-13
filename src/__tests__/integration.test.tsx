@@ -1,284 +1,143 @@
-/**
- * Integration tests for the Landing package
- * Tests: Next.js page rendering, API routes
- * 
- * NOTE: Tests are currently skipped because testing-library dependencies
- * are not installed. To enable tests, install:
- *   - @testing-library/react
- *   - @testing-library/jest-dom
- *   - vitest (already installed)
- */
+import { afterEach, describe, expect, it } from "vitest";
+import {
+	POST_AUTH_RETURN_TO_KEY,
+	buildReturnToCookie,
+	normalizeReturnTo,
+	readCookieValue,
+} from "../lib/auth/return-to-utils";
+import {
+	buildLocalDashboardAuthCallbackUrl,
+	buildReturnToLocalCookie,
+	POST_AUTH_RETURN_TO_LOCAL_KEY,
+	POST_AUTH_RETURN_TO_LOCAL_PATH_KEY,
+	buildReturnToLocalPathCookie,
+	normalizeReturnToLocalOrigin,
+	normalizeReturnToLocalPath,
+	readReturnToLocalCookie,
+	readReturnToLocalPathCookie,
+} from "../lib/auth/return-to-local";
+import {
+	buildDashboardAuthCallbackUrl,
+	buildDashboardLoginUrl,
+	buildDashboardUrl,
+	getDashboardBaseUrl,
+} from "../lib/dashboard-url";
 
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+describe("Landing flow helpers", () => {
+	const originalNodeEnv = process.env.NODE_ENV;
+	const originalDashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL;
+	const originalNoDashboard = process.env.NEXT_PUBLIC_AIDR_E2E_NO_DASHBOARD;
 
-describe("Landing Integration", () => {
-  beforeEach(() => {
-    // Setup code when tests are enabled
-  });
+	afterEach(() => {
+		process.env.NODE_ENV = originalNodeEnv;
 
-  afterEach(() => {
-    // Cleanup code when tests are enabled
-  });
+		if (originalDashboardUrl === undefined) {
+			delete process.env.NEXT_PUBLIC_DASHBOARD_URL;
+		} else {
+			process.env.NEXT_PUBLIC_DASHBOARD_URL = originalDashboardUrl;
+		}
 
-  describe("Placeholder", () => {
-    it("should pass", () => {
-      expect(true).toBe(true);
-    });
-  });
+		if (originalNoDashboard === undefined) {
+			delete process.env.NEXT_PUBLIC_AIDR_E2E_NO_DASHBOARD;
+		} else {
+			process.env.NEXT_PUBLIC_AIDR_E2E_NO_DASHBOARD = originalNoDashboard;
+		}
+	});
+
+	it("normalizes only safe returnTo values", () => {
+		expect(normalizeReturnTo("/verify?code=ABCD-EFGH")).toBe("/verify?code=ABCD-EFGH");
+		expect(normalizeReturnTo("onboarding")).toBe("/onboarding");
+		expect(normalizeReturnTo("//evil.example")).toBe("/onboarding");
+		expect(normalizeReturnTo("", "/")).toBe("/");
+	});
+
+	it("normalizes only safe returnToLocal values", () => {
+		expect(normalizeReturnToLocalOrigin("http://127.0.0.1:4173/")).toBe("http://127.0.0.1:4173");
+		expect(normalizeReturnToLocalOrigin("https://localhost:4173/app/")).toBe("https://localhost:4173");
+		expect(normalizeReturnToLocalOrigin("https://evil.example:4173/")).toBeNull();
+		expect(normalizeReturnToLocalOrigin("http://0.0.0.0:5173/")).toBeNull();
+		expect(normalizeReturnToLocalOrigin("/local")).toBeNull();
+		expect(normalizeReturnToLocalOrigin("javascript:alert(1)")).toBeNull();
+	});
+
+	it("normalizes only safe returnToLocalPath values", () => {
+		expect(normalizeReturnToLocalPath("/onboarding")).toBe("/onboarding");
+		expect(normalizeReturnToLocalPath("/verify?code=ABCD-EFGH")).toBe("/verify?code=ABCD-EFGH");
+		expect(normalizeReturnToLocalPath("onboarding")).toBeNull();
+		expect(normalizeReturnToLocalPath("//evil.example")).toBeNull();
+		expect(normalizeReturnToLocalPath("javascript:alert(1)")).toBeNull();
+	});
+
+	it("serializes and reads the post-auth redirect cookie", () => {
+		const cookie = buildReturnToCookie("/verify?code=ABCD-EFGH");
+		expect(cookie).toContain(POST_AUTH_RETURN_TO_KEY);
+		expect(cookie).toContain("Path=/");
+		expect(cookie).toContain("SameSite=Lax");
+		expect(readCookieValue(cookie, POST_AUTH_RETURN_TO_KEY)).toBe("/verify?code=ABCD-EFGH");
+	});
+
+	it("serializes and reads the local dashboard redirect cookie", () => {
+		const cookie = buildReturnToLocalCookie("http://127.0.0.1:4173/");
+		expect(cookie).toContain(POST_AUTH_RETURN_TO_LOCAL_KEY);
+		expect(cookie).toContain("Path=/");
+		expect(cookie).toContain("SameSite=Lax");
+		expect(readReturnToLocalCookie(cookie)).toBe("http://127.0.0.1:4173");
+	});
+
+	it("serializes and reads the local dashboard returnToLocalPath cookie", () => {
+		const cookie = buildReturnToLocalPathCookie("/verify?code=ABCD-EFGH");
+		expect(cookie).toContain(POST_AUTH_RETURN_TO_LOCAL_PATH_KEY);
+		expect(cookie).toContain("Path=/");
+		expect(cookie).toContain("SameSite=Lax");
+		expect(readReturnToLocalPathCookie(cookie)).toBe("/verify?code=ABCD-EFGH");
+	});
+
+	it("uses the local dashboard URL in development when no env var is set", () => {
+		process.env.NODE_ENV = "development";
+		delete process.env.NEXT_PUBLIC_DASHBOARD_URL;
+
+		expect(getDashboardBaseUrl()).toBe("http://127.0.0.1:5173");
+		expect(buildDashboardUrl("/login")).toBe("http://127.0.0.1:5173/login");
+		expect(buildDashboardLoginUrl()).toBe("http://127.0.0.1:5173/login");
+	});
+
+	it("disables dashboard handoff when production config is missing", () => {
+		process.env.NODE_ENV = "production";
+		delete process.env.NEXT_PUBLIC_DASHBOARD_URL;
+
+		expect(getDashboardBaseUrl()).toBeNull();
+		expect(buildDashboardUrl("/verify")).toBeNull();
+		expect(
+			buildDashboardAuthCallbackUrl(
+				{ access_token: "access-token", refresh_token: "refresh-token" },
+				"/onboarding",
+			),
+		).toBeNull();
+	});
+
+	it("builds the cross-app dashboard handoff URL with session tokens", () => {
+		process.env.NODE_ENV = "development";
+		process.env.NEXT_PUBLIC_DASHBOARD_URL = "https://dashboard.aidr.singularityrd.com/";
+
+		const href = buildDashboardAuthCallbackUrl(
+			{ access_token: "access-token", refresh_token: "refresh-token" },
+			"/onboarding",
+		);
+
+		expect(href).toBe(
+			"https://dashboard.aidr.singularityrd.com/auth/callback#access_token=access-token&refresh_token=refresh-token&returnTo=%2Fonboarding",
+		);
+	});
+
+	it("builds the local dashboard handoff URL with session tokens", () => {
+		const href = buildLocalDashboardAuthCallbackUrl(
+			"http://127.0.0.1:4173/",
+			{ access_token: "access-token", refresh_token: "refresh-token" },
+			"/onboarding",
+		);
+
+		expect(href).toBe(
+			"http://127.0.0.1:4173/auth/callback#access_token=access-token&refresh_token=refresh-token&returnTo=%2Fonboarding",
+		);
+	});
 });
-
-// Original test code preserved below for reference when testing-library is installed:
-/*
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, beforeEach, vi, afterEach } from "vitest";
-
-// Mock Next.js navigation
-vi.mock("next/navigation", () => ({
-  useRouter: vi.fn(() => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    prefetch: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    refresh: vi.fn(),
-  })),
-  usePathname: vi.fn(() => "/"),
-  useSearchParams: vi.fn(() => new URLSearchParams()),
-}));
-
-// Mock next/headers for API routes
-vi.mock("next/headers", () => ({
-  headers: vi.fn(() => new Headers()),
-  cookies: vi.fn(() => new Map()),
-}));
-
-import Home from "../app/page";
-import { GET as instructionsHandler } from "../app/api/instructions/route";
-import Header from "../components/Header";
-import InstallPromptCard from "../components/InstallPromptCard";
-import Background from "../components/Background";
-
-describe("Landing Integration", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
-  describe("Next.js Page Rendering", () => {
-    it("should render the main landing page", () => {
-      const { container } = render(<Home />);
-      
-      expect(container).toBeTruthy();
-      expect(screen.getByText("Edge-first AI Agent Detection & Response")).toBeInTheDocument();
-    });
-
-    it("should display main heading", () => {
-      render(<Home />);
-      
-      expect(screen.getByText("Launch-ready security layer for AI agents.")).toBeInTheDocument();
-    });
-
-    it("should display feature highlights", () => {
-      render(<Home />);
-      
-      expect(screen.getByText(/Tool-call inspection/)).toBeInTheDocument();
-      expect(screen.getByText(/Local enforcement/)).toBeInTheDocument();
-      expect(screen.getByText(/Auth-first model/)).toBeInTheDocument();
-      expect(screen.getByText(/Prompt-install onboarding/)).toBeInTheDocument();
-    });
-
-    it("should display navigation links", () => {
-      render(<Home />);
-      
-      expect(screen.getByText("Waitlist")).toBeInTheDocument();
-      expect(screen.getByText("Book Demo")).toBeInTheDocument();
-      expect(screen.getByText("Free Pilot")).toBeInTheDocument();
-      expect(screen.getByText("Verify Device")).toBeInTheDocument();
-      expect(screen.getByText("Dashboard Login")).toBeInTheDocument();
-    });
-
-    it("should render Header component", () => {
-      const { container } = render(<Header />);
-      
-      expect(container).toBeTruthy();
-    });
-
-    it("should render Background component", () => {
-      const { container } = render(<Background />);
-      
-      expect(container).toBeTruthy();
-    });
-
-    it("should render InstallPromptCard component", () => {
-      const { container } = render(<InstallPromptCard />);
-      
-      expect(container).toBeTruthy();
-    });
-
-    it("should display pricing section", () => {
-      render(<Home />);
-      
-      expect(screen.getByText("Pricing")).toBeInTheDocument();
-      expect(screen.getByText(/1 protected agent free/)).toBeInTheDocument();
-    });
-
-    it("should display feature pillars", () => {
-      render(<Home />);
-      
-      expect(screen.getByText("Prompt-first setup")).toBeInTheDocument();
-      expect(screen.getByText("Device authorization")).toBeInTheDocument();
-      expect(screen.getByText("Incident correlation")).toBeInTheDocument();
-      expect(screen.getByText("Package and plugin guard")).toBeInTheDocument();
-      expect(screen.getByText("Dashboard sync")).toBeInTheDocument();
-      expect(screen.getByText("Offline grace")).toBeInTheDocument();
-    });
-
-    it("should display product surface section", () => {
-      render(<Home />);
-      
-      expect(screen.getByText("Product Surface")).toBeInTheDocument();
-      expect(screen.getByText("Security controls your agent can feel.")).toBeInTheDocument();
-    });
-
-    it("should display core features section", () => {
-      render(<Home />);
-      
-      expect(screen.getByText("Core Features")).toBeInTheDocument();
-    });
-
-    it("should have correct link destinations", () => {
-      render(<Home />);
-      
-      const links = screen.getAllByRole("link");
-      expect(links.length).toBeGreaterThan(0);
-      
-      // Check that links have href attributes
-      links.forEach((link: HTMLElement) => {
-        expect(link).toHaveAttribute("href");
-      });
-    });
-  });
-
-  describe("API Routes", () => {
-    it("should return instructions from /api/instructions", async () => {
-      const response = await instructionsHandler();
-      
-      expect(response).toBeInstanceOf(Response);
-      expect(response.status).toBe(200);
-      expect(response.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
-    });
-
-    it("should return valid markdown content from instructions endpoint", async () => {
-      const response = await instructionsHandler();
-      const text = await response.text();
-      
-      expect(text).toContain("Context+ MCP");
-      expect(text).toContain("Agent Instructions");
-      expect(text).toContain("Purpose");
-      expect(text).toContain("Architecture");
-    });
-
-    it("should include tool reference in instructions", async () => {
-      const response = await instructionsHandler();
-      const text = await response.text();
-      
-      expect(text).toContain("Tool Reference");
-      expect(text).toContain("get_context_tree");
-      expect(text).toContain("semantic_code_search");
-    });
-
-    it("should include environment variables section", async () => {
-      const response = await instructionsHandler();
-      const text = await response.text();
-      
-      expect(text).toContain("Environment Variables");
-      expect(text).toContain("OLLAMA_EMBED_MODEL");
-    });
-
-    it("should include execution rules section", async () => {
-      const response = await instructionsHandler();
-      const text = await response.text();
-      
-      expect(text).toContain("Fast Execute Mode");
-      expect(text).toContain("Execution Rules");
-    });
-  });
-
-  describe("Component Integration", () => {
-    it("should render IsometricDiagram in page", () => {
-      // IsometricDiagram is rendered within the page
-      const { container } = render(<Home />);
-      
-      // Check for SVG or diagram container
-      expect(container.querySelector("svg") || container.querySelector("[class*='diagram']")).toBeTruthy();
-    });
-
-    it("should have proper styling classes", () => {
-      const { container } = render(<Home />);
-      
-      // Check for CSS custom properties usage
-      const hasStyling = container.innerHTML.includes("--panel-border") || 
-            container.innerHTML.includes("panel") ||
-            container.innerHTML.includes("style=");
-      expect(hasStyling).toBe(true);
-    });
-
-    it("should render responsive grid layout", () => {
-      const { container } = render(<Home />);
-      
-      // Check for grid-related styles or classes
-      const hasLayout = container.innerHTML.includes("grid") || 
-            container.innerHTML.includes("flex");
-      expect(hasLayout).toBe(true);
-    });
-  });
-
-  describe("Accessibility", () => {
-    it("should have proper heading hierarchy", () => {
-      const { container } = render(<Home />);
-      
-      const h1 = container.querySelector("h1");
-      expect(h1).toBeTruthy();
-      expect(h1?.textContent).toContain("Launch-ready security");
-    });
-
-    it("should have accessible links", () => {
-      render(<Home />);
-      
-      const links = screen.getAllByRole("link");
-      links.forEach((link: HTMLElement) => {
-        expect(link).toHaveAttribute("href");
-        expect(link.getAttribute("href")).toBeTruthy();
-      });
-    });
-
-    it("should have semantic HTML structure", () => {
-      const { container } = render(<Home />);
-      
-      expect(container.querySelector("main")).toBeTruthy();
-      expect(container.querySelector("section")).toBeTruthy();
-    });
-  });
-
-  describe("Performance", () => {
-    it("should render without errors", () => {
-      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-      
-      render(<Home />);
-      
-      expect(consoleError).not.toHaveBeenCalled();
-      
-      consoleError.mockRestore();
-    });
-
-    it("should have proper dynamic export", () => {
-      // Home component should export with dynamic flag
-      expect(Home).toBeDefined();
-    });
-  });
-});
-*/

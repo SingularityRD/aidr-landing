@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getFirebaseBrowserClient } from "@/lib/firebase/database-client";
 
 // Types
 interface User {
@@ -11,15 +11,6 @@ interface User {
   githubId?: string;
   referralCode: string;
   createdAt: string;
-}
-
-interface GoogleCredential {
-  id: string;
-  email: string;
-  name?: string;
-  picture?: string;
-  familyName?: string;
-  givenName?: string;
 }
 
 interface CredentialShare {
@@ -73,10 +64,10 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
     let cancelled = false;
 
     async function loadUser() {
-      const supabase = getSupabaseBrowserClient();
+      const firebaseClient = getFirebaseBrowserClient();
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await firebaseClient.auth.getSession();
 
       if (session?.user && !cancelled) {
         const userData: User = {
@@ -85,7 +76,7 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
           googleId: session.user.user_metadata?.provider_id,
           githubId: session.user.user_metadata?.github_id,
           referralCode: generateReferralCode(session.user.id),
-          createdAt: session.user.created_at,
+          createdAt: session.user.created_at ?? new Date().toISOString(),
         };
         setUser(userData);
         await loadSharedCredentials(session.user.id);
@@ -97,10 +88,10 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
     loadUser();
 
     // Subscribe to auth changes
-    const supabase = getSupabaseBrowserClient();
+    const firebaseClient = getFirebaseBrowserClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = firebaseClient.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         const userData: User = {
           id: session.user.id,
@@ -108,7 +99,7 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
           googleId: session.user.user_metadata?.provider_id,
           githubId: session.user.user_metadata?.github_id,
           referralCode: generateReferralCode(session.user.id),
-          createdAt: session.user.created_at,
+          createdAt: session.user.created_at ?? new Date().toISOString(),
         };
         setUser(userData);
         await loadSharedCredentials(session.user.id);
@@ -126,8 +117,11 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
 
   // Load credential shares
   async function loadSharedCredentials(userId: string) {
-    const supabase = getSupabaseBrowserClient();
-    const { data } = await supabase.from("credential_shares").select("*").eq("owner_id", userId);
+    const firebaseClient = getFirebaseBrowserClient();
+    const { data } = (await firebaseClient
+      .from("credential_shares")
+      .select("*")
+      .eq("owner_id", userId)) as { data: CredentialShare[] | null };
 
     if (data) {
       setSharedCredentials(data as CredentialShare[]);
@@ -153,10 +147,10 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
   const signInWithGoogle = useCallback(async () => {
     setIsLoading(true);
 
-    const supabase = getSupabaseBrowserClient();
+    const firebaseClient = getFirebaseBrowserClient();
     const redirectTo = `${window.location.origin}/auth/callback`;
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await firebaseClient.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo,
@@ -189,9 +183,9 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
         client_id: clientId,
         callback: async (response: { credential: string }) => {
           try {
-            const supabase = getSupabaseBrowserClient();
-            // Send ID token to Supabase
-            const { error } = await supabase.auth.signInWithIdToken({
+            const firebaseClient = getFirebaseBrowserClient();
+            // Send ID token to Firebase
+            const { error } = await firebaseClient.auth.signInWithIdToken({
               provider: "google",
               token: response.credential,
             });
@@ -219,8 +213,8 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
     async (email: string) => {
       if (!user) throw new Error("Must be signed in to share credentials");
 
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase.from("credential_shares").insert({
+      const firebaseClient = getFirebaseBrowserClient();
+      const { error } = await firebaseClient.from("credential_shares").insert({
         owner_id: user.id,
         shared_with_email: email,
         status: "pending",
@@ -239,8 +233,8 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
     async (agentId: string, config: Record<string, unknown>) => {
       if (!user) throw new Error("Must be signed in to sync");
 
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase.from("agent_sync").upsert(
+      const firebaseClient = getFirebaseBrowserClient();
+      const { error } = await firebaseClient.from("agent_sync").upsert(
         {
           agent_id: agentId,
           user_id: user.id,
@@ -261,8 +255,19 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
   const getSyncedAgents = useCallback(async (): Promise<AgentSync[]> => {
     if (!user) return [];
 
-    const supabase = getSupabaseBrowserClient();
-    const { data, error } = await supabase.from("agent_sync").select("*").eq("user_id", user.id);
+    const firebaseClient = getFirebaseBrowserClient();
+    const { data, error } = (await firebaseClient
+      .from("agent_sync")
+      .select("*")
+      .eq("user_id", user.id)) as {
+      data: Array<{
+        agent_id: string;
+        user_id: string;
+        config: Record<string, unknown>;
+        last_synced_at: string;
+      }> | null;
+      error: { message: string } | null;
+    };
 
     if (error) throw error;
 
@@ -277,8 +282,8 @@ export function GoogleAuthProvider({ children, clientId }: GoogleAuthProviderPro
   // Sign out
   const signOut = useCallback(async () => {
     setIsLoading(true);
-    const supabase = getSupabaseBrowserClient();
-    await supabase.auth.signOut();
+    const firebaseClient = getFirebaseBrowserClient();
+    await firebaseClient.auth.signOut();
     setUser(null);
     setSharedCredentials([]);
     setIsLoading(false);

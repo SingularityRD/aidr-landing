@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getSupabaseBrowserClient } from "../../../lib/supabase/client";
+import { getFirebaseBrowserClient } from "../../../lib/firebase/database-client";
+import { getSession } from "../../../lib/auth/session";
 
 type ApiKeyRow = {
   id: string;
@@ -31,8 +32,9 @@ export default function ApiKeysPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [now] = useState(() => Date.now());
 
-  const supabase = getSupabaseBrowserClient();
+  const firebaseClient = getFirebaseBrowserClient();
 
   const trimmedLabel = useMemo(() => label.trim(), [label]);
   const trimmedEnrollLabel = useMemo(() => enrollLabel.trim(), [enrollLabel]);
@@ -41,19 +43,22 @@ export default function ApiKeysPage() {
     setError(null);
 
     // Get current user
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getSession();
     if (!session?.user) {
       setError("Please sign in to view API keys");
       setPilotStatus("unknown");
       return;
     }
 
-    setUser(session.user);
+    setUser({
+      id: session.user.id,
+      email: session.user.email ?? undefined,
+    });
 
     const [pilotRes, keysRes, enrollRes] = await Promise.all([
-      supabase.functions.invoke("pilot-status", { method: "GET" }),
-      supabase.functions.invoke("api-keys", { method: "GET" }),
-      supabase.functions.invoke("enrollment-tokens", { method: "GET" }),
+      firebaseClient.functions.invoke("pilot-status", { method: "GET" }),
+      firebaseClient.functions.invoke("api-keys", { method: "GET" }),
+      firebaseClient.functions.invoke("enrollment-tokens", { method: "GET" }),
     ]);
 
     if (pilotRes.error) {
@@ -85,10 +90,12 @@ export default function ApiKeysPage() {
     }
     const enrollData = (enrollRes.data ?? {}) as { tokens?: EnrollmentTokenRow[] };
     setEnrollTokens((enrollData.tokens ?? []) as EnrollmentTokenRow[]);
-  }, [supabase]);
+  }, [firebaseClient]);
 
   useEffect(() => {
-    load();
+    queueMicrotask(() => {
+      void load();
+    });
   }, [load]);
 
   const approved = pilotStatus === "approved";
@@ -185,7 +192,7 @@ export default function ApiKeysPage() {
               setError(null);
               setCreatedKey(null);
               try {
-                const res = await supabase.functions.invoke("api-keys", {
+                const res = await firebaseClient.functions.invoke("api-keys", {
                   method: "POST",
                   body: { action: "create", label: trimmedLabel || null },
                 });
@@ -333,7 +340,7 @@ export default function ApiKeysPage() {
               setError(null);
               setCreatedEnrollToken(null);
               try {
-                const res = await supabase.functions.invoke("enrollment-tokens", {
+                const res = await firebaseClient.functions.invoke("enrollment-tokens", {
                   method: "POST",
                   body: { action: "create", label: trimmedEnrollLabel || null },
                 });
@@ -462,7 +469,7 @@ export default function ApiKeysPage() {
                       setBusy(true);
                       setError(null);
                       try {
-                        const res = await supabase.functions.invoke("api-keys", {
+                        const res = await firebaseClient.functions.invoke("api-keys", {
                           method: "POST",
                           body: { action: "revoke", id: k.id },
                         });
@@ -549,19 +556,19 @@ export default function ApiKeysPage() {
                       background:
                         t.consumed_at
                           ? "rgba(239, 68, 68, 0.1)"
-                          : Date.now() > Date.parse(t.expires_at)
+                          : now > Date.parse(t.expires_at)
                           ? "rgba(234, 179, 8, 0.1)"
                           : "rgba(34, 197, 94, 0.1)",
                       color: t.consumed_at
                         ? "#ef4444"
-                        : Date.now() > Date.parse(t.expires_at)
+                        : now > Date.parse(t.expires_at)
                         ? "#eab308"
                         : "#22c55e",
                     }}
                   >
                     {t.consumed_at
                       ? "consumed"
-                      : Date.now() > Date.parse(t.expires_at)
+                      : now > Date.parse(t.expires_at)
                       ? "expired"
                       : "active"}
                   </span>
@@ -575,7 +582,7 @@ export default function ApiKeysPage() {
                       setBusy(true);
                       setError(null);
                       try {
-                        const { error: delErr } = await supabase.functions.invoke(
+                        const { error: delErr } = await firebaseClient.functions.invoke(
                           "enrollment-tokens",
                           {
                             method: "POST",

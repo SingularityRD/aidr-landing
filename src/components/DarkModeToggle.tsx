@@ -4,11 +4,12 @@ import { useTheme } from "./ThemeProvider";
 
 export default function DarkModeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const resolvedTheme = theme;
 
   return (
     <button
       onClick={toggleTheme}
-      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+      aria-label={`Switch to ${resolvedTheme === "light" ? "dark" : "light"} mode`}
       style={{
         background: "none",
         border: "none",
@@ -19,7 +20,7 @@ export default function DarkModeToggle() {
         justifyContent: "center",
       }}
     >
-      {theme === "light" ? (
+      {resolvedTheme === "light" ? (
         <svg
           width="18"
           height="18"

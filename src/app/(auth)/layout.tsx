@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Background from "../../components/Background";
 
 export const metadata: Metadata = {
-  title: "Sign In - Singularity AIDR",
-  description: "Sign in to Singularity AIDR to manage your AI agent protection.",
+  title: "Authentication - Singularity AIDR",
+  description: "Sign in or sign up to Singularity AIDR to manage your AI agent protection.",
 };
 
 export default function AuthLayout({

@@ -5,7 +5,6 @@ import { useEffect, useRef, useCallback } from 'react';
 const CHARS = '01{}[]()<>;:=/\\|!@#$%^&*~`+-_.?,abcdefghijklmnopqrstuvwxyz';
 const COL_GAP = 14;
 const ROW_H = 16;
-const FONT = '12px monospace';
 
 interface Column {
   x: number;

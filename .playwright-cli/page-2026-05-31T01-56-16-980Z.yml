@@ -1,0 +1,353 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - navigation [ref=e4]:
+      - link "AIDR" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e6]:
+        - link "Pricing" [ref=e7] [cursor=pointer]:
+          - /url: /#pricing
+        - link "Features" [ref=e8] [cursor=pointer]:
+          - /url: /#features
+        - link "Compare" [ref=e9] [cursor=pointer]:
+          - /url: /compare
+        - link "Dashboard" [ref=e10] [cursor=pointer]:
+          - /url: /dashboard
+        - generic "Demo User" [ref=e11]: D
+    - main [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]: Competitive Position
+        - heading "AIDR is the only tool that protects agent tool-call execution." [level=1] [ref=e15]
+        - paragraph [ref=e16]:
+          - text: Every competitor focuses on
+          - strong [ref=e17]: LLM I/O security
+          - text: — prompt injection, jailbreak detection, output validation. AIDR protects the
+          - strong [ref=e18]: agent runtime
+          - text: ": the shell commands, file writes, network requests, package installations, and MCP tool calls that actually execute on your machine."
+        - generic [ref=e19]:
+          - link "Get AIDR Free" [ref=e20] [cursor=pointer]:
+            - /url: /login
+          - link "Compare Pricing" [ref=e21] [cursor=pointer]:
+            - /url: /pricing
+      - generic [ref=e22]:
+        - generic [ref=e23]: Feature Comparison Matrix
+        - table [ref=e24]:
+          - rowgroup [ref=e25]:
+            - row "Category AIDR Lakera Protect AI Guardrails AI AgentShield" [ref=e26]:
+              - columnheader "Category" [ref=e27]
+              - columnheader "AIDR" [ref=e28]
+              - columnheader "Lakera" [ref=e29]
+              - columnheader "Protect AI" [ref=e30]
+              - columnheader "Guardrails AI" [ref=e31]
+              - columnheader "AgentShield" [ref=e32]
+          - rowgroup [ref=e33]:
+            - row "Protection Scope Tool-call execution (Bash, Write, Fetch, Read, Edit, MCP) LLM prompts & responses (I/O firewall) Model files + ML pipelines (MLSecOps) LLM output validation & structure Prompt I/O + agent runtime" [ref=e34]:
+              - cell "Protection Scope" [ref=e35]
+              - cell "Tool-call execution (Bash, Write, Fetch, Read, Edit, MCP)" [ref=e36]
+              - cell "LLM prompts & responses (I/O firewall)" [ref=e37]
+              - cell "Model files + ML pipelines (MLSecOps)" [ref=e38]
+              - cell "LLM output validation & structure" [ref=e39]
+              - cell "Prompt I/O + agent runtime" [ref=e40]
+            - row "Deployment Local-first, optional cloud sync Cloud SaaS or self-hosted Cloud SaaS (Palo Alto) Python library (self-hosted) Cloud SaaS" [ref=e41]:
+              - cell "Deployment" [ref=e42]
+              - cell "Local-first, optional cloud sync" [ref=e43]
+              - cell "Cloud SaaS or self-hosted" [ref=e44]
+              - cell "Cloud SaaS (Palo Alto)" [ref=e45]
+              - cell "Python library (self-hosted)" [ref=e46]
+              - cell "Cloud SaaS" [ref=e47]
+            - row "Pricing $0 (1 agent) → $5/agent/mo $0 (10K req) → $99 → $499 → Enterprise Enterprise only (custom) Free core → $49/mo Pro $29/mo → Enterprise" [ref=e48]:
+              - cell "Pricing" [ref=e49]
+              - cell "$0 (1 agent) → $5/agent/mo" [ref=e50]
+              - cell "$0 (10K req) → $99 → $499 → Enterprise" [ref=e51]
+              - cell "Enterprise only (custom)" [ref=e52]
+              - cell "Free core → $49/mo Pro" [ref=e53]
+              - cell "$29/mo → Enterprise" [ref=e54]
+            - row "Offline Support ✅ Full offline with cache ❌ Cloud-dependent ❌ Cloud-dependent ✅ Self-hosted ✅ Self-hosted option" [ref=e55]:
+              - cell "Offline Support" [ref=e56]
+              - cell "✅ Full offline with cache" [ref=e57]
+              - cell "❌ Cloud-dependent" [ref=e58]
+              - cell "❌ Cloud-dependent" [ref=e59]
+              - cell "✅ Self-hosted" [ref=e60]
+              - cell "✅ Self-hosted option" [ref=e61]
+            - row "Agent Platform Support Claude Code, Cursor, VS Code, OpenClaw, OpenCode Any LLM via API (model-agnostic) ML pipelines + notebooks Any LLM via Python SDK Any LLM via API" [ref=e62]:
+              - cell "Agent Platform Support" [ref=e63]
+              - cell "Claude Code, Cursor, VS Code, OpenClaw, OpenCode" [ref=e64]
+              - cell "Any LLM via API (model-agnostic)" [ref=e65]
+              - cell "ML pipelines + notebooks" [ref=e66]
+              - cell "Any LLM via Python SDK" [ref=e67]
+              - cell "Any LLM via API" [ref=e68]
+            - row "Fail-Open Design ✅ Never breaks agent ❌ Block on error ❌ Block on error ❌ Block on error ❌ Block on error" [ref=e69]:
+              - cell "Fail-Open Design" [ref=e70]
+              - cell "✅ Never breaks agent" [ref=e71]
+              - cell "❌ Block on error" [ref=e72]
+              - cell "❌ Block on error" [ref=e73]
+              - cell "❌ Block on error" [ref=e74]
+              - cell "❌ Block on error" [ref=e75]
+            - row "Privacy No code/prompts sent externally Prompts sent to API Full telemetry Self-hosted (data stays local) Prompts sent to API" [ref=e76]:
+              - cell "Privacy" [ref=e77]
+              - cell "No code/prompts sent externally" [ref=e78]
+              - cell "Prompts sent to API" [ref=e79]
+              - cell "Full telemetry" [ref=e80]
+              - cell "Self-hosted (data stays local)" [ref=e81]
+              - cell "Prompts sent to API" [ref=e82]
+            - row "Open Source ✅ Core engine (MIT) ❌ Proprietary ✅ ModelScan only ✅ Core library ❌ Proprietary" [ref=e83]:
+              - cell "Open Source" [ref=e84]
+              - cell "✅ Core engine (MIT)" [ref=e85]
+              - cell "❌ Proprietary" [ref=e86]
+              - cell "✅ ModelScan only" [ref=e87]
+              - cell "✅ Core library" [ref=e88]
+              - cell "❌ Proprietary" [ref=e89]
+            - row "Sub-50ms Latency ✅ Local detection (no network call) ✅ API-based N/A ✅ ~50ms overhead ✅ ~2.44ms self-hosted" [ref=e90]:
+              - cell "Sub-50ms Latency" [ref=e91]
+              - cell "✅ Local detection (no network call)" [ref=e92]
+              - cell "✅ API-based" [ref=e93]
+              - cell "N/A" [ref=e94]
+              - cell "✅ ~50ms overhead" [ref=e95]
+              - cell "✅ ~2.44ms self-hosted" [ref=e96]
+            - row "SaaS Free Tier ✅ 1 agent forever ✅ 10K req/mo free ❌ No free tier ✅ Free core ✅ 100 req/day free" [ref=e97]:
+              - cell "SaaS Free Tier" [ref=e98]
+              - cell "✅ 1 agent forever" [ref=e99]
+              - cell "✅ 10K req/mo free" [ref=e100]
+              - cell "❌ No free tier" [ref=e101]
+              - cell "✅ Free core" [ref=e102]
+              - cell "✅ 100 req/day free" [ref=e103]
+            - row "Audit & Redaction ✅ Built-in PII redaction ✅ Full audit logs ✅ Audit trails Limited Usage logs only" [ref=e104]:
+              - cell "Audit & Redaction" [ref=e105]
+              - cell "✅ Built-in PII redaction" [ref=e106]
+              - cell "✅ Full audit logs" [ref=e107]
+              - cell "✅ Audit trails" [ref=e108]
+              - cell "Limited" [ref=e109]
+              - cell "Usage logs only" [ref=e110]
+      - generic [ref=e111]:
+        - generic [ref=e112]: Why AIDR Wins
+        - generic [ref=e113]:
+          - generic [ref=e114]:
+            - generic [ref=e115]: Only tool-call protection
+            - generic [ref=e116]: No competitor protects Bash commands, file writes, network requests, and MCP tool calls before execution. AIDR is the only agent runtime security layer.
+          - generic [ref=e117]:
+            - generic [ref=e118]: Local-first, offline-capable
+            - generic [ref=e119]: Every competitor requires cloud connectivity. AIDR runs fully offline with cached verdicts. Cloud sync is optional.
+          - generic [ref=e120]:
+            - generic [ref=e121]: Fail-open by design
+            - generic [ref=e122]: Competitors block on error. AIDR never breaks your agent — every internal error returns 'allow'. Your workflow never stops.
+          - generic [ref=e123]:
+            - generic [ref=e124]: Developer-native onboarding
+            - generic [ref=e125]: No admin-led deployment. No API keys to configure. Install by prompt in Claude Code, authorize in browser, and go.
+          - generic [ref=e126]:
+            - generic [ref=e127]: Per-agent pricing ($5/mo)
+            - generic [ref=e128]: Competitors charge per API call ($99-499/mo for meaningful volume). AIDR charges per agent. Predictable, simple, and up to 20x cheaper at scale.
+          - generic [ref=e129]:
+            - generic [ref=e130]: Privacy by architecture
+            - generic [ref=e131]: AIDR never sends code, prompts, or file contents externally. Competitors send everything to their cloud for analysis.
+      - generic [ref=e132]:
+        - generic [ref=e133]: Competitor Deep Dives
+        - generic [ref=e134]:
+          - generic [ref=e135]:
+            - generic [ref=e136]:
+              - generic [ref=e138]:
+                - generic [ref=e139]: LG
+                - generic [ref=e140]:
+                  - generic [ref=e141]: Lakera Guard
+                  - generic [ref=e142]: Runtime LLM firewall — prompt injection & data leakage prevention
+              - generic [ref=e143]:
+                - generic [ref=e144]: "Pricing: Free (10K req/mo) → $99 → $499 → Enterprise"
+                - generic [ref=e145]: $30M (acquired by Check Point)
+            - generic [ref=e146]:
+              - generic [ref=e147]:
+                - generic [ref=e148]: Strength
+                - generic [ref=e149]: Low latency API, broad threat coverage (15+ types), SOC2/GDPR
+              - generic [ref=e150]:
+                - generic [ref=e151]: Limitation
+                - generic [ref=e152]: Cloud-dependent, only protects LLM prompts/responses — not agent tool calls. Expensive at scale.
+            - generic [ref=e153]:
+              - generic [ref=e154]: AIDR Edge
+              - generic [ref=e155]: "AIDR protects the full agent runtime: commands, files, packages, plugins, and output — not just prompts."
+            - generic [ref=e156]: You need an API-based LLM firewall and already have agent runtime covered elsewhere.
+          - generic [ref=e157]:
+            - generic [ref=e158]:
+              - generic [ref=e160]:
+                - generic [ref=e161]: PA
+                - generic [ref=e162]:
+                  - generic [ref=e163]: Protect AI (Palo Alto)
+                  - generic [ref=e164]: MLSecOps platform — model scanning, supply chain, runtime
+              - generic [ref=e165]:
+                - generic [ref=e166]: "Pricing: Enterprise only (custom)"
+                - generic [ref=e167]: $35M Series B (acquired by Palo Alto Networks)
+            - generic [ref=e168]:
+              - generic [ref=e169]:
+                - generic [ref=e170]: Strength
+                - generic [ref=e171]: Deep model vulnerability scanning, NB Defense, SBOM for AI
+              - generic [ref=e172]:
+                - generic [ref=e173]: Limitation
+                - generic [ref=e174]: Enterprise-only pricing, no developer-agent runtime focus, heavy platform dependency
+            - generic [ref=e175]:
+              - generic [ref=e176]: AIDR Edge
+              - generic [ref=e177]: AIDR is lightweight, developer-first, and protects coding agents at the tool-call level — not ML pipelines.
+            - generic [ref=e178]: You need enterprise MLSecOps across thousands of models and have Palo Alto budget.
+          - generic [ref=e179]:
+            - generic [ref=e180]:
+              - generic [ref=e182]:
+                - generic [ref=e183]: GA
+                - generic [ref=e184]:
+                  - generic [ref=e185]: Guardrails AI
+                  - generic [ref=e186]: Output validation framework — structured data, schema enforcement
+              - generic [ref=e187]:
+                - generic [ref=e188]: "Pricing: Free core → $49/mo Pro → Enterprise"
+                - generic [ref=e189]: Seed stage
+            - generic [ref=e190]:
+              - generic [ref=e191]:
+                - generic [ref=e192]: Strength
+                - generic [ref=e193]: 50+ validators, streaming support, Pydantic integration
+              - generic [ref=e194]:
+                - generic [ref=e195]: Limitation
+                - generic [ref=e196]: Not a security tool — focuses on output quality, not threat detection
+            - generic [ref=e197]:
+              - generic [ref=e198]: AIDR Edge
+              - generic [ref=e199]: "AIDR is built for security: prompt injection, RCE, credential theft, supply chain — not just output formatting."
+            - generic [ref=e200]: You need structured LLM outputs (JSON/XML) with retry logic and schema validation.
+          - generic [ref=e201]:
+            - generic [ref=e202]:
+              - generic [ref=e204]:
+                - generic [ref=e205]: AS
+                - generic [ref=e206]:
+                  - generic [ref=e207]: AgentShield
+                  - generic [ref=e208]: Low-latency runtime classification for agent interactions
+              - generic [ref=e209]:
+                - generic [ref=e210]: "Pricing: $29/mo (5K req/day) → Enterprise"
+                - generic [ref=e211]: Bootstrapped
+            - generic [ref=e212]:
+              - generic [ref=e213]:
+                - generic [ref=e214]: Strength
+                - generic [ref=e215]: Ultra-low latency (2.44ms), self-hosted option
+              - generic [ref=e216]:
+                - generic [ref=e217]: Limitation
+                - generic [ref=e218]: Narrow scope (classification only), no tool-call protection, early-stage
+            - generic [ref=e219]:
+              - generic [ref=e220]: AIDR Edge
+              - generic [ref=e221]: AIDR provides 4-layer detection (heuristics, reputation, supply chain, plugin scan) — not just classification.
+            - generic [ref=e222]: You need ultra-low-latency classification and already have other security layers.
+          - generic [ref=e223]:
+            - generic [ref=e224]:
+              - generic [ref=e226]:
+                - generic [ref=e227]: LG
+                - generic [ref=e228]:
+                  - generic [ref=e229]: LLM Guard (Protect AI)
+                  - generic [ref=e230]: Open-source PII, toxicity, secrets, and prompt injection scanner
+              - generic [ref=e231]:
+                - generic [ref=e232]: "Pricing: Free (open source, Apache 2.0)"
+                - generic [ref=e233]: Part of Protect AI
+            - generic [ref=e234]:
+              - generic [ref=e235]:
+                - generic [ref=e236]: Strength
+                - generic [ref=e237]: Open source, self-hosted, broad scanner coverage
+              - generic [ref=e238]:
+                - generic [ref=e239]: Limitation
+                - generic [ref=e240]: No runtime protection, no agent integration, no dashboard, manual updates
+            - generic [ref=e241]:
+              - generic [ref=e242]: AIDR Edge
+              - generic [ref=e243]: AIDR provides managed protection with dashboard, incident correlation, and automatic rule updates.
+            - generic [ref=e244]: You want a free self-hosted scanning library and have ops capacity to maintain it.
+          - generic [ref=e245]:
+            - generic [ref=e246]:
+              - generic [ref=e248]:
+                - generic [ref=e249]: NG
+                - generic [ref=e250]:
+                  - generic [ref=e251]: NeMo Guardrails (NVIDIA)
+                  - generic [ref=e252]: Policy-as-code framework for multi-turn agent dialogues
+              - generic [ref=e253]:
+                - generic [ref=e254]: "Pricing: Free (open source, Apache 2.0)"
+                - generic [ref=e255]: NVIDIA
+            - generic [ref=e256]:
+              - generic [ref=e257]:
+                - generic [ref=e258]: Strength
+                - generic [ref=e259]: Colang-based policy, deep LangChain integration
+              - generic [ref=e260]:
+                - generic [ref=e261]: Limitation
+                - generic [ref=e262]: Requires LLM for enforcement, high latency, complex setup, no tool-call protection
+            - generic [ref=e263]:
+              - generic [ref=e264]: AIDR Edge
+              - generic [ref=e265]: AIDR protects at the tool-execution boundary — not just dialogue policy. Works offline with zero LLM dependency.
+            - generic [ref=e266]: You need complex dialogue policies for multi-turn chatbot conversations.
+          - generic [ref=e267]:
+            - generic [ref=e268]:
+              - generic [ref=e270]:
+                - generic [ref=e271]: LS
+                - generic [ref=e272]:
+                  - generic [ref=e273]: Lasso Security
+                  - generic [ref=e274]: Pure-play agentic AI security with policy framework
+              - generic [ref=e275]:
+                - generic [ref=e276]: "Pricing: Enterprise only"
+                - generic [ref=e277]: Series A (undisclosed)
+            - generic [ref=e278]:
+              - generic [ref=e279]:
+                - generic [ref=e280]: Strength
+                - generic [ref=e281]: Deep agent-specific controls, policy framework
+              - generic [ref=e282]:
+                - generic [ref=e283]: Limitation
+                - generic [ref=e284]: Enterprise-only pricing, no developer tool focus, no offline mode
+            - generic [ref=e285]:
+              - generic [ref=e286]: AIDR Edge
+              - generic [ref=e287]: AIDR is developer-first with free tier, local enforcement, and direct platform integration.
+            - generic [ref=e288]: You're an enterprise deploying custom agents and need a dedicated agent security policy framework.
+      - generic [ref=e289]:
+        - heading "The only agent runtime security layer." [level=2] [ref=e290]
+        - paragraph [ref=e291]: No competitor protects what AIDR protects. Install by prompt, protect your first agent free, and get runtime security that no other tool provides.
+        - link "Get Started Free" [ref=e292] [cursor=pointer]:
+          - /url: /login
+  - contentinfo [ref=e293]:
+    - generic [ref=e294]:
+      - generic [ref=e295]:
+        - link "AIDR" [ref=e296] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=e297]: AI Agent Detection & Response. Secure your AI coding agents with edge-first protection.
+      - generic [ref=e298]:
+        - generic [ref=e299]: Product
+        - generic [ref=e300]:
+          - link "Features" [ref=e301] [cursor=pointer]:
+            - /url: /#features
+          - link "How It Works" [ref=e302] [cursor=pointer]:
+            - /url: /#how-it-works
+          - link "Pricing" [ref=e303] [cursor=pointer]:
+            - /url: /pricing
+          - link "FAQ" [ref=e304] [cursor=pointer]:
+            - /url: /#faq
+      - generic [ref=e305]:
+        - generic [ref=e306]: Platforms
+        - generic [ref=e307]:
+          - link "Claude Code" [ref=e308] [cursor=pointer]:
+            - /url: /#platforms
+          - link "Cursor" [ref=e309] [cursor=pointer]:
+            - /url: /#platforms
+          - link "VS Code" [ref=e310] [cursor=pointer]:
+            - /url: /#platforms
+          - link "OpenClaw" [ref=e311] [cursor=pointer]:
+            - /url: /#platforms
+      - generic [ref=e312]:
+        - generic [ref=e313]: Resources
+        - generic [ref=e314]:
+          - link "Documentation" [ref=e315] [cursor=pointer]:
+            - /url: https://github.com/singularityrd/aidr
+          - link "GitHub" [ref=e316] [cursor=pointer]:
+            - /url: https://github.com/singularityrd/aidr
+          - link "Status" [ref=e317] [cursor=pointer]:
+            - /url: /
+          - link "Compare" [ref=e318] [cursor=pointer]:
+            - /url: /compare
+      - generic [ref=e319]:
+        - generic [ref=e320]: Company
+        - generic [ref=e321]:
+          - link "Privacy" [ref=e322] [cursor=pointer]:
+            - /url: /
+          - link "Terms" [ref=e323] [cursor=pointer]:
+            - /url: /
+          - link "Security" [ref=e324] [cursor=pointer]:
+            - /url: /#security
+          - link "Contact" [ref=e325] [cursor=pointer]:
+            - /url: mailto:hello@singularityrd.com
+    - generic [ref=e326]:
+      - generic [ref=e327]: © 2026 Singularity Research & Development. All rights reserved.
+      - generic [ref=e328]:
+        - link "GitHub" [ref=e329] [cursor=pointer]:
+          - /url: https://github.com/singularityrd/aidr
+        - generic [ref=e330]: Polar • Stripe
+  - button "Open Next.js Dev Tools" [ref=e336] [cursor=pointer]:
+    - img [ref=e337]

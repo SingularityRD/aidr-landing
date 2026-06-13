@@ -1,0 +1,100 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - link "AIDR" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Pricing" [ref=e6] [cursor=pointer]:
+          - /url: /#pricing
+        - link "Features" [ref=e7] [cursor=pointer]:
+          - /url: /#features
+        - link "Compare" [ref=e8] [cursor=pointer]:
+          - /url: /compare
+        - link "Dashboard" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+        - generic "Demo User" [ref=e10]: D
+    - main [ref=e11]:
+      - navigation [ref=e12]:
+        - generic [ref=e13]:
+          - link "Connect" [ref=e14] [cursor=pointer]:
+            - /url: /onboarding
+          - link "Dashboard" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Billing" [ref=e16] [cursor=pointer]:
+            - /url: /billing
+          - link "API Keys" [ref=e17] [cursor=pointer]:
+            - /url: /api-keys
+          - link "Agents" [ref=e18] [cursor=pointer]:
+            - /url: /agents
+          - link "Events" [ref=e19] [cursor=pointer]:
+            - /url: /events
+          - link "Policy Rollout" [ref=e20] [cursor=pointer]:
+            - /url: /policy-rollout
+          - link "Approvals" [ref=e21] [cursor=pointer]:
+            - /url: /policy-approvals
+          - link "Delivery" [ref=e22] [cursor=pointer]:
+            - /url: /delivery-failures
+          - link "Incidents" [ref=e23] [cursor=pointer]:
+            - /url: /incidents
+          - link "Settings" [ref=e24] [cursor=pointer]:
+            - /url: /settings
+          - button "Sign out" [ref=e26] [cursor=pointer]
+      - generic [ref=e29]: Loading settings…
+  - contentinfo [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - link "AIDR" [ref=e33] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=e34]: AI Agent Detection & Response. Secure your AI coding agents with edge-first protection.
+      - generic [ref=e35]:
+        - generic [ref=e36]: Product
+        - generic [ref=e37]:
+          - link "Features" [ref=e38] [cursor=pointer]:
+            - /url: /#features
+          - link "How It Works" [ref=e39] [cursor=pointer]:
+            - /url: /#how-it-works
+          - link "Pricing" [ref=e40] [cursor=pointer]:
+            - /url: /pricing
+          - link "FAQ" [ref=e41] [cursor=pointer]:
+            - /url: /#faq
+      - generic [ref=e42]:
+        - generic [ref=e43]: Platforms
+        - generic [ref=e44]:
+          - link "Claude Code" [ref=e45] [cursor=pointer]:
+            - /url: /#platforms
+          - link "Cursor" [ref=e46] [cursor=pointer]:
+            - /url: /#platforms
+          - link "VS Code" [ref=e47] [cursor=pointer]:
+            - /url: /#platforms
+          - link "OpenClaw" [ref=e48] [cursor=pointer]:
+            - /url: /#platforms
+      - generic [ref=e49]:
+        - generic [ref=e50]: Resources
+        - generic [ref=e51]:
+          - link "Documentation" [ref=e52] [cursor=pointer]:
+            - /url: https://github.com/singularityrd/aidr
+          - link "GitHub" [ref=e53] [cursor=pointer]:
+            - /url: https://github.com/singularityrd/aidr
+          - link "Status" [ref=e54] [cursor=pointer]:
+            - /url: /
+          - link "Compare" [ref=e55] [cursor=pointer]:
+            - /url: /compare
+      - generic [ref=e56]:
+        - generic [ref=e57]: Company
+        - generic [ref=e58]:
+          - link "Privacy" [ref=e59] [cursor=pointer]:
+            - /url: /
+          - link "Terms" [ref=e60] [cursor=pointer]:
+            - /url: /
+          - link "Security" [ref=e61] [cursor=pointer]:
+            - /url: /#security
+          - link "Contact" [ref=e62] [cursor=pointer]:
+            - /url: mailto:hello@singularityrd.com
+    - generic [ref=e63]:
+      - generic [ref=e64]: © 2026 Singularity Research & Development. All rights reserved.
+      - generic [ref=e65]:
+        - link "GitHub" [ref=e66] [cursor=pointer]:
+          - /url: https://github.com/singularityrd/aidr
+        - generic [ref=e67]: Polar • Stripe
+  - button "Open Next.js Dev Tools" [ref=e73] [cursor=pointer]:
+    - img [ref=e74]

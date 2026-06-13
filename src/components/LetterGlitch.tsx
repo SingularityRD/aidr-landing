@@ -33,7 +33,7 @@ const LetterGlitch = ({
   >([]);
   const grid = useRef({ columns: 0, rows: 0 });
   const context = useRef<CanvasRenderingContext2D | null>(null);
-  const lastGlitchTime = useRef<number>(0);
+  const frameCount = useRef<number>(0);
 
   const lettersAndSymbols = Array.from(characters);
 
@@ -97,6 +97,8 @@ const LetterGlitch = ({
     }));
   };
 
+  // Canvas helpers mutate refs and are intentionally recreated with current props.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const resizeCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -187,13 +189,14 @@ const LetterGlitch = ({
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const animate = () => {
-    const now = Date.now();
+    frameCount.current += 1;
+    const frameStep = Math.max(1, Math.round(glitchSpeed / 16));
 
-    if (now - lastGlitchTime.current >= glitchSpeed) {
+    if (frameCount.current % frameStep === 0) {
       updateLetters();
       drawLetters();
-      lastGlitchTime.current = now;
     }
 
     if (smooth) {
@@ -266,9 +269,21 @@ const LetterGlitch = ({
       "radial-gradient(circle, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 60%)",
   };
 
+  const diagonalFadeStyle: React.CSSProperties = {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    pointerEvents: "none",
+    background: `linear-gradient(${fadeAngle}deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.92) 100%)`,
+    mixBlendMode: "multiply",
+  };
+
   return (
     <div style={containerStyle}>
       <canvas ref={canvasRef} style={canvasStyle} />
+      {diagonalFade && <div style={diagonalFadeStyle}></div>}
       {outerVignette && <div style={outerVignetteStyle}></div>}
       {centerVignette && <div style={centerVignetteStyle}></div>}
     </div>

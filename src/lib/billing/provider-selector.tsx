@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
 interface ProviderOption {
-  id: "lemon_squeezy";
+  id: "polar";
   name: string;
   icon: string;
   features: string[];
@@ -20,14 +18,14 @@ export function PaymentProviderSelector({
   isSelected = true,
 }: PaymentProviderSelectorProps) {
   const provider: ProviderOption = {
-    id: "lemon_squeezy",
-    name: "🍋 Lemon Squeezy",
-    icon: "/lemon-squeezy-logo.svg",
+    id: "polar",
+    name: "Polar",
+    icon: "/polar-logo.svg",
     features: [
-      "Global payments",
       "Subscription management",
-      "Tax compliance",
-      "Instant invoicing",
+      "Webhook-signed entitlement sync",
+      "Global SaaS billing",
+      "Seat enforcement",
     ],
     recommended: true,
   };
@@ -135,7 +133,7 @@ function ProviderCard({ provider, isSelected, onClick }: ProviderCardProps) {
 
 // Get payment button text
 export function getPaymentButtonText(): string {
-  return "Subscribe with Lemon Squeezy";
+  return "Subscribe with Polar";
 }
 
 // Get currency display symbol

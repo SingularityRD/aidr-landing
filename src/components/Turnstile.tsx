@@ -23,15 +23,13 @@ declare global {
 export function Turnstile({ onVerify, onError, onExpire, siteKey }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(Boolean(siteKey || process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY));
   const [hasError, setHasError] = useState(false);
 
   const actualSiteKey = siteKey || process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
     if (!actualSiteKey) {
-      setIsLoading(false);
-      setHasError(true);
       return;
     }
 
@@ -39,6 +37,7 @@ export function Turnstile({ onVerify, onError, onExpire, siteKey }: TurnstilePro
     const scriptId = "turnstile-script";
     if (document.getElementById(scriptId)) {
       renderTurnstile();
+      window.requestAnimationFrame(() => setIsLoading(false));
       return;
     }
 
@@ -47,7 +46,10 @@ export function Turnstile({ onVerify, onError, onExpire, siteKey }: TurnstilePro
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
     script.async = true;
     script.defer = true;
-    script.onload = () => renderTurnstile();
+    script.onload = () => {
+      renderTurnstile();
+      window.requestAnimationFrame(() => setIsLoading(false));
+    };
     script.onerror = () => {
       setIsLoading(false);
       setHasError(true);
@@ -80,10 +82,13 @@ export function Turnstile({ onVerify, onError, onExpire, siteKey }: TurnstilePro
             onExpire?.();
           },
         });
+        window.requestAnimationFrame(() => setIsLoading(false));
       } catch {
-        setIsLoading(false);
-        setHasError(true);
-        onError?.();
+        window.requestAnimationFrame(() => {
+          setIsLoading(false);
+          setHasError(true);
+          onError?.();
+        });
       }
     }
   }, [actualSiteKey, onVerify, onError, onExpire]);

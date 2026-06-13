@@ -1,13 +1,8 @@
+import { verifyHmacSha256Signature } from "./signature";
+
 // Lemon Squeezy API client
 const LEMON_API_KEY = process.env.LEMON_SQUEEZY_API_KEY;
 const LEMON_STORE_ID = process.env.LEMON_SQUEEZY_STORE_ID;
-
-interface LemonProduct {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-}
 
 // Pre-created Lemon Squeezy products
 const PRODUCTS = {
@@ -154,6 +149,7 @@ export async function cancelSubscription(subscriptionId: string) {
 
 // Create customer portal URL
 export async function createCustomerPortal(customerId: string): Promise<string> {
+  void customerId;
   // Lemon Squeezy does not have a direct customer portal
   // Customers receive subscription management URLs via email
   return `https://${process.env.LEMON_SQUEEZY_STORE_SLUG || "store"}.lemonsqueezy.com/billing`;
@@ -165,16 +161,21 @@ export function verifyWebhookSignature(
   signature: string,
   secret: string
 ): boolean {
-  // Lemon Squeezy webhook signature verification
-  // Real implementation should use crypto for HMAC verification
-  return true;
+  return verifyHmacSha256Signature(payload, signature, secret);
 }
 
 // Pricing utilities
-export const USD_PER_EXTRA_AGENT_PER_MONTH = 2;
+export const USD_PER_EXTRA_AGENT_PER_MONTH = 5;
+export const USD_PER_EXTRA_AGENT_PER_YEAR = 48; // $4/agent/month billed yearly
 
 export function calculateMonthlyEstimate(agentCount: number): number {
-  // Commercial model: first agent is free, each additional is $2/mo
+  // Commercial model: first agent is free, each additional is $5/mo
   const billable = Math.max(0, agentCount - 1);
   return billable * USD_PER_EXTRA_AGENT_PER_MONTH;
+}
+
+export function calculateYearlyEstimate(agentCount: number): number {
+  // Yearly billing: $4/agent/month ($48/agent/year)
+  const billable = Math.max(0, agentCount - 1);
+  return billable * USD_PER_EXTRA_AGENT_PER_YEAR;
 }

@@ -1,0 +1,173 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - link "AIDR" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Pricing" [ref=e6] [cursor=pointer]:
+          - /url: /#pricing
+        - link "Features" [ref=e7] [cursor=pointer]:
+          - /url: /#features
+        - link "Compare" [ref=e8] [cursor=pointer]:
+          - /url: /compare
+        - link "Dashboard" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+        - generic "Demo User" [ref=e10]: D
+        - button "Switch to dark mode" [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+    - main [ref=e14]:
+      - navigation [ref=e15]:
+        - generic [ref=e16]:
+          - link "Connect" [ref=e17] [cursor=pointer]:
+            - /url: /onboarding
+          - link "Dashboard" [ref=e18] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Billing" [ref=e19] [cursor=pointer]:
+            - /url: /billing
+          - link "API Keys" [ref=e20] [cursor=pointer]:
+            - /url: /api-keys
+          - link "Agents" [ref=e21] [cursor=pointer]:
+            - /url: /agents
+          - link "Events" [ref=e22] [cursor=pointer]:
+            - /url: /events
+          - link "Policy Rollout" [ref=e23] [cursor=pointer]:
+            - /url: /policy-rollout
+          - link "Approvals" [ref=e24] [cursor=pointer]:
+            - /url: /policy-approvals
+          - link "Delivery" [ref=e25] [cursor=pointer]:
+            - /url: /delivery-failures
+          - link "Incidents" [ref=e26] [cursor=pointer]:
+            - /url: /incidents
+          - link "Settings" [ref=e27] [cursor=pointer]:
+            - /url: /settings
+          - button "Sign out" [ref=e29] [cursor=pointer]
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: POLICY ROLLOUT
+          - heading "One place to verify what every agent will enforce." [level=1] [ref=e33]
+          - paragraph [ref=e34]: Track the current account policy, endpoint cache freshness, drift alerts, acknowledgements, and related security events before agents execute tool calls.
+          - generic [ref=e35]:
+            - link "Policy settings" [ref=e36] [cursor=pointer]:
+              - /url: /settings#policy-rollout
+            - link "Remediation events" [ref=e37] [cursor=pointer]:
+              - /url: /events?class=remediation
+            - link "Security events" [ref=e38] [cursor=pointer]:
+              - /url: /events?class=security
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic [ref=e51]: version
+            - generic [ref=e52]: pol_demo_locked_down
+          - generic [ref=e53]:
+            - generic [ref=e54]: current
+            - generic [ref=e55]: "1"
+          - generic [ref=e56]:
+            - generic [ref=e57]: fresh
+            - generic [ref=e58]: "1"
+          - generic [ref=e59]:
+            - generic [ref=e60]: stale
+            - generic [ref=e61]: "1"
+          - generic [ref=e62]:
+            - generic [ref=e63]: unknown
+            - generic [ref=e64]: "1"
+          - generic [ref=e65]:
+            - generic [ref=e66]: alerts
+            - generic [ref=e67]: "2"
+          - generic [ref=e68]:
+            - generic [ref=e69]: acked
+            - generic [ref=e70]: "1"
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]:
+              - generic [ref=e74]: Admin actions
+              - generic [ref=e75]: Filter rollout drift by acknowledgement status, export stale agents, or draft a reconnect reminder.
+            - generic [ref=e76]:
+              - text: Acknowledgement
+              - combobox "Acknowledgement" [ref=e77]:
+                - option "All" [selected]
+                - option "Unacknowledged"
+                - option "Acknowledged"
+          - generic [ref=e78]:
+            - button "Generate stale-agent CSV" [ref=e79] [cursor=pointer]
+            - button "Draft bulk reconnect reminder" [ref=e80] [cursor=pointer]
+            - button "Send webhook reminder" [active] [ref=e81] [cursor=pointer]
+          - generic [ref=e164]: Demo delivery prepared for 2 agents.
+          - generic [ref=e150]:
+            - generic [ref=e151]: Stale-agent export
+            - textbox "Stale-agent export" [ref=e152]: "\"agent_id\",\"name\",\"runtime\",\"status\",\"alert_label\",\"severity\",\"current_policy_version\",\"reported_policy_version\",\"cache_source\",\"age_seconds\",\"ttl_seconds\",\"reason\" \"aidr_ag_demo_cursor\",\"Cursor workspace\",\"cursor\",\"connected\",\"stale\",\"warning\",\"pol_demo_locked_down\",\"pol_demo_standard\",\"expired\",\"28800\",\"0\",\"Policy cache is stale beyond the 5m SLA.\" \"aidr_ag_demo_opencode\",\"OpenCode sandbox\",\"opencode\",\"pending\",\"unknown\",\"warning\",\"pol_demo_locked_down\",\"\",\"missing\",\"\",\"\",\"Agent has not reported a usable runtime policy cache.\""
+          - generic [ref=e153]:
+            - generic [ref=e154]: Bulk reconnect reminder
+            - textbox "Bulk reconnect reminder" [ref=e155]: "AIDR policy rollout reminder Current policy: pol_demo_locked_down Please reconnect or refresh the following agents so they enforce the latest runtime policy before tool calls run: 1. Cursor workspace (cursor) - Policy cache is stale beyond the 5m SLA. Current policy: pol_demo_locked_down. Reported policy: pol_demo_standard. 2. OpenCode sandbox (opencode) - Agent has not reported a usable runtime policy cache. Current policy: pol_demo_locked_down. Reported policy: not reported. Open AIDR > Policy Rollout for the current cache state and acknowledgement history."
+        - generic [ref=e82]:
+          - generic [ref=e83]:
+            - generic [ref=e84]:
+              - generic [ref=e85]: Agent cache state
+              - generic [ref=e86]: Endpoint-reported cache metadata from the last heartbeat or ingest.
+            - link "Agent inventory" [ref=e87] [cursor=pointer]:
+              - /url: /agents
+          - generic [ref=e88]:
+            - generic [ref=e89]:
+              - generic [ref=e90]:
+                - generic [ref=e91]:
+                  - link "Claude Code - laptop" [ref=e92] [cursor=pointer]:
+                    - /url: /agents/aidr_ag_demo_claude#runtime-policy-cache
+                  - generic [ref=e93]: claude-code
+                - generic [ref=e94]: Policy pol_demo_locked_down · age 1m · ttl 41m
+              - generic [ref=e95]: fresh
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - generic [ref=e98]:
+                  - link "Cursor workspace" [ref=e99] [cursor=pointer]:
+                    - /url: /agents/aidr_ag_demo_cursor#runtime-policy-cache
+                  - generic [ref=e100]: cursor
+                - generic [ref=e101]: Policy pol_demo_standard · age 8h · ttl 0s
+              - generic [ref=e102]: stale
+            - generic [ref=e103]:
+              - generic [ref=e104]:
+                - generic [ref=e105]:
+                  - link "OpenCode sandbox" [ref=e106] [cursor=pointer]:
+                    - /url: /agents/aidr_ag_demo_opencode#runtime-policy-cache
+                  - generic [ref=e107]: opencode
+                - generic [ref=e108]: Policy not reported · age unknown · ttl unknown
+              - generic [ref=e109]: unknown
+        - generic [ref=e110]:
+          - generic [ref=e111]: Drift alerts
+          - generic [ref=e112]:
+            - generic [ref=e113]:
+              - generic [ref=e114]: Cursor workspace
+              - generic [ref=e115]: Policy cache is stale beyond the 5m SLA.
+              - generic [ref=e116]:
+                - link "Related security events" [ref=e117] [cursor=pointer]:
+                  - /url: /events?agent=aidr_ag_demo_cursor&class=security
+                - link "Acknowledgements" [ref=e118] [cursor=pointer]:
+                  - /url: /events?agent=aidr_ag_demo_cursor&class=remediation
+            - generic [ref=e119]:
+              - generic [ref=e120]: OpenCode sandbox
+              - generic [ref=e121]: Agent has not reported a usable runtime policy cache.
+              - generic [ref=e122]:
+                - link "Related security events" [ref=e123] [cursor=pointer]:
+                  - /url: /events?agent=aidr_ag_demo_opencode&class=security
+                - link "Acknowledgements" [ref=e124] [cursor=pointer]:
+                  - /url: /events?agent=aidr_ag_demo_opencode&class=remediation
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e127]: Acknowledgement history
+            - generic [ref=e129]:
+              - generic [ref=e130]: Policy drift mark reviewed
+              - generic [ref=e131]: aidr_ag_demo_cursor · 06.05.2026 14:19:30
+          - generic [ref=e132]:
+            - generic [ref=e133]: Related security events
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - generic [ref=e136]: pre_tool_use
+                - generic [ref=e137]: aidr_ag_demo_cursor · deny · critical
+              - generic [ref=e138]:
+                - generic [ref=e139]: post_tool_use
+                - generic [ref=e140]: aidr_ag_demo_cursor · ask · warning
+  - button "Open Next.js Dev Tools" [ref=e156] [cursor=pointer]:
+    - generic [ref=e159]:
+      - text: Compiling
+      - generic [ref=e160]:
+        - generic [ref=e161]: .
+        - generic [ref=e162]: .
+        - generic [ref=e163]: .
+  - alert [ref=e149]

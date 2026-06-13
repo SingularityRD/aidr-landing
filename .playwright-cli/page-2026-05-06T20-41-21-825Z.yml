@@ -1,0 +1,168 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - link "AIDR" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Pricing" [ref=e6] [cursor=pointer]:
+          - /url: /#pricing
+        - link "Features" [ref=e7] [cursor=pointer]:
+          - /url: /#features
+        - link "Compare" [ref=e8] [cursor=pointer]:
+          - /url: /compare
+        - link "Dashboard" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+        - generic "Demo User" [ref=e10]: D
+        - button "Switch to dark mode" [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+    - main [ref=e14]:
+      - navigation [ref=e15]:
+        - generic [ref=e16]:
+          - link "Connect" [ref=e17] [cursor=pointer]:
+            - /url: /onboarding
+          - link "Dashboard" [ref=e18] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Billing" [ref=e19] [cursor=pointer]:
+            - /url: /billing
+          - link "API Keys" [ref=e20] [cursor=pointer]:
+            - /url: /api-keys
+          - link "Agents" [ref=e21] [cursor=pointer]:
+            - /url: /agents
+          - link "Events" [ref=e22] [cursor=pointer]:
+            - /url: /events
+          - link "Policy Rollout" [ref=e23] [cursor=pointer]:
+            - /url: /policy-rollout
+          - link "Approvals" [ref=e24] [cursor=pointer]:
+            - /url: /policy-approvals
+          - link "Delivery" [ref=e25] [cursor=pointer]:
+            - /url: /delivery-failures
+          - link "Incidents" [ref=e26] [cursor=pointer]:
+            - /url: /incidents
+          - link "Settings" [ref=e27] [cursor=pointer]:
+            - /url: /settings
+          - button "Sign out" [ref=e29] [cursor=pointer]
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: DELIVERY FAILURES
+          - heading "Keep failed exports visible until someone closes the loop." [level=1] [ref=e33]
+          - paragraph [ref=e34]: Failed SIEM exports and policy rollout reminders leave retry/dead-letter evidence with destination origin, backoff metadata, and replay entry points.
+          - generic [ref=e35]:
+            - link "Policy rollout" [ref=e36] [cursor=pointer]:
+              - /url: /policy-rollout
+            - link "Security export settings" [ref=e37] [cursor=pointer]:
+              - /url: /settings#security-export
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]: total
+            - generic [ref=e41]: "2"
+          - generic [ref=e42]:
+            - generic [ref=e43]: retry pending
+            - generic [ref=e44]: "0"
+          - generic [ref=e45]:
+            - generic [ref=e46]: dead-letter
+            - generic [ref=e47]: "1"
+          - generic [ref=e48]:
+            - generic [ref=e49]: replayed
+            - generic [ref=e50]: "0"
+          - generic [ref=e51]:
+            - generic [ref=e52]: closed
+            - generic [ref=e53]: "1"
+          - generic [ref=e54]:
+            - generic [ref=e55]: SLA overdue
+            - generic [ref=e56]: "1"
+          - generic [ref=e57]:
+            - generic [ref=e58]: security export
+            - generic [ref=e59]: "1"
+          - generic [ref=e60]:
+            - generic [ref=e61]: policy rollout
+            - generic [ref=e62]: "1"
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - generic [ref=e66]: Failure queue
+              - generic [ref=e67]: Review retry status, dead-letter evidence, and replay destination.
+            - generic [ref=e68]:
+              - text: Status
+              - combobox "Status" [ref=e69]:
+                - option "All" [selected]
+                - option "Retry pending"
+                - option "Dead-letter"
+                - option "Closed"
+          - generic [ref=e150]: Demo replay marked as delivered.
+          - generic [ref=e151]: Demo case close recorded.
+          - generic [ref=e80]:
+            - article [ref=e81]:
+              - generic [ref=e82]:
+                - generic [ref=e83]:
+                  - generic [ref=e84]: policy.rollout_reminder
+                  - generic [ref=e85]: policy_rollout · policy_rollout_demo_1
+                - generic [ref=e86]: closed
+              - generic [ref=e87]:
+                - generic [ref=e88]:
+                  - generic [ref=e89]: destination
+                  - generic [ref=e90]: https://hooks.example
+                - generic [ref=e91]:
+                  - generic [ref=e92]: reason
+                  - generic [ref=e93]: http_502
+                - generic [ref=e94]:
+                  - generic [ref=e95]: owner
+                  - generic [ref=e96]: demo-user-001
+                - generic [ref=e97]:
+                  - generic [ref=e98]: SLA
+                  - generic [ref=e99]: closed · 07.05.2026 23:41:13
+                - generic [ref=e100]:
+                  - generic [ref=e101]: attempt
+                  - generic [ref=e102]: 1/5
+                - generic [ref=e103]:
+                  - generic [ref=e104]: next retry
+                  - generic [ref=e105]: 06.05.2026 14:20:30
+                - generic [ref=e106]:
+                  - generic [ref=e107]: dead-letter
+                  - generic [ref=e108]: none
+              - generic [ref=e109]:
+                - button "Assign to me" [disabled] [ref=e110]
+                - button "Manual replay action" [ref=e111] [cursor=pointer]
+                - button "Reopen case" [active] [ref=e152] [cursor=pointer]
+                - link "Replay settings" [ref=e113] [cursor=pointer]:
+                  - /url: /policy-rollout
+                - link "Remediation events" [ref=e114] [cursor=pointer]:
+                  - /url: /events?class=remediation
+            - article [ref=e115]:
+              - generic [ref=e116]:
+                - generic [ref=e117]:
+                  - generic [ref=e118]: security.events
+                  - generic [ref=e119]: security_export · evt_demo_exfil_deny
+                - generic [ref=e120]: dead-letter
+              - generic [ref=e121]:
+                - generic [ref=e122]:
+                  - generic [ref=e123]: destination
+                  - generic [ref=e124]: https://siem.example
+                - generic [ref=e125]:
+                  - generic [ref=e126]: reason
+                  - generic [ref=e127]: network_error
+                - generic [ref=e128]:
+                  - generic [ref=e129]: owner
+                  - generic [ref=e130]: unassigned
+                - generic [ref=e131]:
+                  - generic [ref=e132]: SLA
+                  - generic [ref=e133]: SLA overdue · 06.05.2026 14:20:00
+                - generic [ref=e134]:
+                  - generic [ref=e135]: attempt
+                  - generic [ref=e136]: 5/5
+                - generic [ref=e137]:
+                  - generic [ref=e138]: next retry
+                  - generic [ref=e139]: none
+                - generic [ref=e140]:
+                  - generic [ref=e141]: dead-letter
+                  - generic [ref=e142]: 06.05.2026 14:21:00
+              - generic [ref=e143]:
+                - button "Assign to me" [ref=e144] [cursor=pointer]
+                - button "Manual replay action" [ref=e145] [cursor=pointer]
+                - button "Close case" [ref=e146] [cursor=pointer]
+                - link "Replay settings" [ref=e147] [cursor=pointer]:
+                  - /url: /settings#security-export
+                - link "Remediation events" [ref=e148] [cursor=pointer]:
+                  - /url: /events?class=remediation
+  - button "Open Next.js Dev Tools" [ref=e76] [cursor=pointer]:
+    - img [ref=e77]
+  - alert [ref=e149]

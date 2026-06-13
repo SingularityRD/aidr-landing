@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getSupabaseBrowserClient } from "../../../lib/supabase/client";
+import { getFirebaseBrowserClient } from "../../../lib/firebase/database-client";
+import { getSession } from "../../../lib/auth/session";
 
 type PilotStatus =
   | { status: "none" }
@@ -25,15 +26,14 @@ export default function PilotPage() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const supabase = getSupabaseBrowserClient();
-      const sessRes = await supabase.auth.getSession();
-      const sess = sessRes.data.session;
+      const firebaseClient = getFirebaseBrowserClient();
+      const sess = await getSession();
       if (cancelled) return;
       setHasSession(Boolean(sess));
       setSessionReady(true);
       if (!sess) return;
 
-      const res = await supabase.functions.invoke("pilot-status", { method: "GET" });
+      const res = await firebaseClient.functions.invoke("pilot-status", { method: "GET" });
       if (!res.error) {
         const data = (res.data ?? {}) as Record<string, unknown>;
         const st = String(data.status ?? "none");
@@ -118,8 +118,8 @@ export default function PilotPage() {
                 setBusy(true);
                 setError(null);
                 try {
-                  const supabase = getSupabaseBrowserClient();
-                  const res = await supabase.functions.invoke("pilot-apply", {
+                  const firebaseClient = getFirebaseBrowserClient();
+                  const res = await firebaseClient.functions.invoke("pilot-apply", {
                     method: "POST",
                     body: { message: trimmed },
                   });

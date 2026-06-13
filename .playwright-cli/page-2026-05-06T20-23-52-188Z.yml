@@ -1,0 +1,75 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - navigation [ref=e4]:
+      - link "AIDR" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e6]:
+        - link "Pricing" [ref=e7] [cursor=pointer]:
+          - /url: /#pricing
+        - link "Features" [ref=e8] [cursor=pointer]:
+          - /url: /#features
+        - link "Compare" [ref=e9] [cursor=pointer]:
+          - /url: /compare
+        - link "Dashboard" [ref=e10] [cursor=pointer]:
+          - /url: /dashboard
+        - generic "Demo User" [ref=e11]: D
+        - button "Switch to dark mode" [ref=e12] [cursor=pointer]:
+          - img [ref=e13]
+    - main [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: Competitive Position
+        - heading "AIDR is built for local AI coding-agent runtime security." [level=1] [ref=e18]
+        - paragraph [ref=e19]: "Broad AI security suites are expanding fast. AIDR wins by owning the developer endpoint: inspecting shell, file, URL, package, plugin, output, and MCP tool calls before they run."
+        - generic [ref=e20]:
+          - link "Connect an agent" [ref=e21] [cursor=pointer]:
+            - /url: /onboarding
+          - link "View pricing" [ref=e22] [cursor=pointer]:
+            - /url: /#pricing
+      - generic [ref=e23]:
+        - article [ref=e24]:
+          - heading "MCPTotal" [level=2] [ref=e25]
+          - generic [ref=e26]: Endpoint AI agent and MCP visibility
+          - generic [ref=e27]: AIDR pairs MCP risk hints with local pre-execution allow, ask, and block policy.
+        - article [ref=e28]:
+          - heading "Microsoft Defender for AI agents" [level=2] [ref=e29]
+          - generic [ref=e30]: Enterprise suite protection across Microsoft-managed agents
+          - generic [ref=e31]: AIDR starts on developer endpoints and coding agents without requiring a broad suite rollout.
+        - article [ref=e32]:
+          - heading "HiddenLayer" [level=2] [ref=e33]
+          - generic [ref=e34]: Enterprise AI runtime visibility, detection, and investigation
+          - generic [ref=e35]: AIDR is lighter-weight for local coding-agent tool calls before shell, file, URL, or MCP execution.
+        - article [ref=e36]:
+          - heading "Lakera Guard" [level=2] [ref=e37]
+          - generic [ref=e38]: API guardrails for prompt injection, data leakage, and malicious links
+          - generic [ref=e39]: "AIDR protects the agent runtime surface beyond prompts: commands, files, packages, plugins, and output."
+        - article [ref=e40]:
+          - heading "Capsule / Clarient" [level=2] [ref=e41]
+          - generic [ref=e42]: Agent discovery, graphs, compliance, and SaaS agent governance
+          - generic [ref=e43]: AIDR focuses first on developer machines, local enforcement, and incident evidence from coding agents.
+        - article [ref=e44]:
+          - heading "Rutile / Okta AI Agents" [level=2] [ref=e45]
+          - generic [ref=e46]: Agent identity, permissions, lifecycle, and kill switches
+          - generic [ref=e47]: AIDR complements identity by deciding whether risky tool calls should run at the endpoint.
+      - generic [ref=e48]:
+        - heading "Why AIDR Wins Its Wedge" [level=2] [ref=e50]
+        - generic [ref=e51]:
+          - generic [ref=e52]: Capability
+          - generic [ref=e53]: AIDR
+          - generic [ref=e54]: Typical alternative
+          - generic [ref=e55]: Local pre-execution enforcement
+          - generic [ref=e56]: Primary surface
+          - generic [ref=e57]: Usually suite, gateway, or identity adjacent
+          - generic [ref=e58]: Coding-agent connector depth
+          - generic [ref=e59]: Claude Code, Cursor/VS Code, OpenCode, OpenClaw, MCP
+          - generic [ref=e60]: Often broader but less developer-runtime specific
+          - generic [ref=e61]: MCP tool-call policy
+          - generic [ref=e62]: Inventory plus allow, ask, block decisions
+          - generic [ref=e63]: Varies by vendor and usually focuses on visibility
+          - generic [ref=e64]: Privacy posture
+          - generic [ref=e65]: Local-first with managed dashboard sync
+          - generic [ref=e66]: Often cloud-first or enterprise telemetry-first
+          - generic [ref=e67]: Onboarding motion
+          - generic [ref=e68]: Copy prompt, verify device, first event visible
+          - generic [ref=e69]: Usually admin-led deployment
+  - button "Open Next.js Dev Tools" [ref=e75] [cursor=pointer]:
+    - img [ref=e76]

@@ -1,0 +1,102 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]: ONBOARDING
+        - heading "Welcome, Demo" [level=1] [ref=e9]
+        - paragraph [ref=e10]: You have 1 free agent included. Copy the prompt below and paste it into any AI agent runtime — Claude Code, Cursor, VS Code, OpenClaw, or OpenCode.
+        - generic [ref=e11]: 🎮 Demo Mode — no real auth required
+      - generic [ref=e12]:
+        - generic [ref=e13]: Connected agents
+        - generic [ref=e14]: "3"
+        - generic [ref=e15]: Each connected installation gets its own identity, audit trail, and seat usage tracking.
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - heading "First-run checklist" [level=2] [ref=e19]
+          - generic [ref=e20]: 3 of 4 complete
+        - generic [ref=e21]: 75%
+      - generic [ref=e22]:
+        - generic [ref=e25]: Prompt copied
+        - generic [ref=e28]: Agent installed
+        - generic [ref=e31]: Device verified
+        - generic [ref=e34]: First event received
+    - generic [ref=e35]:
+      - heading "🛡️ Protect Your First Agent" [level=2] [ref=e36]
+      - paragraph [ref=e37]: This prompt works in any AI runtime. Copy, paste, and your agent installs AIDR automatically.
+      - generic [ref=e94]: "AIDR Security Enrollment 1) Install the AIDR connector: ```bash npx @singularityrd/aidr-setup --code 27D5FD98 ``` 2) Verify the device in your browser (must be the same account): http://localhost:4567/auth/27D5FD98 Security note: If you did not request this enrollment, do not proceed. Account: Manage seats & billing: http://localhost:4567/billing"
+      - generic [ref=e95]:
+        - button "📋 Copy Prompt" [ref=e96] [cursor=pointer]
+        - button "🔄 New Prompt" [ref=e97] [cursor=pointer]
+    - generic [ref=e39]:
+      - heading "How it works" [level=3] [ref=e40]
+      - generic [ref=e41]:
+        - text: 1. Click Generate Install Prompt above
+        - text: 2. Copy the prompt and paste it into your AI agent chat
+        - text: 3. Your agent runs the install command automatically
+        - text: 4. Click the authorization link (you're already signed in)
+        - text: 5. Done — your agent is now protected 🛡️
+    - generic [ref=e42]:
+      - heading "Need more agents?" [level=3] [ref=e43]
+      - paragraph [ref=e44]: Upgrade to Pro for $2/month per agent. Protect your entire AI toolkit.
+      - link "Upgrade to Pro →" [ref=e45] [cursor=pointer]:
+        - /url: /billing
+  - contentinfo [ref=e46]:
+    - generic [ref=e47]:
+      - generic [ref=e48]:
+        - link "AIDR" [ref=e49] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=e50]: AI Agent Detection & Response. Secure your AI coding agents with edge-first protection.
+      - generic [ref=e51]:
+        - generic [ref=e52]: Product
+        - generic [ref=e53]:
+          - link "Features" [ref=e54] [cursor=pointer]:
+            - /url: /#features
+          - link "How It Works" [ref=e55] [cursor=pointer]:
+            - /url: /#how-it-works
+          - link "Pricing" [ref=e56] [cursor=pointer]:
+            - /url: /pricing
+          - link "FAQ" [ref=e57] [cursor=pointer]:
+            - /url: /#faq
+      - generic [ref=e58]:
+        - generic [ref=e59]: Platforms
+        - generic [ref=e60]:
+          - link "Claude Code" [ref=e61] [cursor=pointer]:
+            - /url: /#platforms
+          - link "Cursor" [ref=e62] [cursor=pointer]:
+            - /url: /#platforms
+          - link "VS Code" [ref=e63] [cursor=pointer]:
+            - /url: /#platforms
+          - link "OpenClaw" [ref=e64] [cursor=pointer]:
+            - /url: /#platforms
+      - generic [ref=e65]:
+        - generic [ref=e66]: Resources
+        - generic [ref=e67]:
+          - link "Documentation" [ref=e68] [cursor=pointer]:
+            - /url: https://github.com/singularityrd/aidr
+          - link "GitHub" [ref=e69] [cursor=pointer]:
+            - /url: https://github.com/singularityrd/aidr
+          - link "Status" [ref=e70] [cursor=pointer]:
+            - /url: /
+          - link "Compare" [ref=e71] [cursor=pointer]:
+            - /url: /compare
+      - generic [ref=e72]:
+        - generic [ref=e73]: Company
+        - generic [ref=e74]:
+          - link "Privacy" [ref=e75] [cursor=pointer]:
+            - /url: /
+          - link "Terms" [ref=e76] [cursor=pointer]:
+            - /url: /
+          - link "Security" [ref=e77] [cursor=pointer]:
+            - /url: /#security
+          - link "Contact" [ref=e78] [cursor=pointer]:
+            - /url: mailto:hello@singularityrd.com
+    - generic [ref=e79]:
+      - generic [ref=e80]: © 2026 Singularity Research & Development. All rights reserved.
+      - generic [ref=e81]:
+        - link "GitHub" [ref=e82] [cursor=pointer]:
+          - /url: https://github.com/singularityrd/aidr
+        - generic [ref=e83]: Polar • Stripe
+  - button "Open Next.js Dev Tools" [ref=e89] [cursor=pointer]:
+    - img [ref=e90]
+  - alert [ref=e93]

@@ -1,0 +1,65 @@
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:4568
+- Network:       http://172.31.0.1:4568
+- Environments: .env.local
+✓ Ready in 2.1s
+- Experiments (use with caution):
+  · clientTraceMetadata
+  · optimizePackageImports
+
+ GET /onboarding 200 in 1332ms (next.js: 560ms, proxy.ts: 121ms, application-code: 651ms)
+ GET /api/v1/install-prompt 200 in 3.3s (next.js: 3.3s, proxy.ts: 7ms, application-code: 22ms)
+ GET /compare 200 in 219ms (next.js: 40ms, proxy.ts: 7ms, application-code: 172ms)
+ GET /settings 200 in 350ms (next.js: 42ms, proxy.ts: 6ms, application-code: 303ms)
+ GET /policy-approvals 200 in 1087ms (next.js: 982ms, proxy.ts: 6ms, application-code: 99ms)
+ GET /events 200 in 164ms (next.js: 32ms, proxy.ts: 5ms, application-code: 127ms)
+ GET /events?class=remediation 200 in 90ms (next.js: 4ms, proxy.ts: 6ms, application-code: 80ms)
+ GET /events?agent=aidr_ag_demo_cursor 200 in 101ms (next.js: 3ms, proxy.ts: 5ms, application-code: 93ms)
+ GET /incidents 200 in 218ms (next.js: 37ms, proxy.ts: 7ms, application-code: 175ms)
+ GET /policy-rollout 200 in 154ms (next.js: 32ms, proxy.ts: 6ms, application-code: 116ms)
+ GET /delivery-failures 200 in 148ms (next.js: 36ms, proxy.ts: 5ms, application-code: 106ms)
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:4568
+- Network:       http://172.31.0.1:4568
+- Environments: .env.local
+✓ Ready in 251ms
+- Experiments (use with caution):
+  · clientTraceMetadata
+  · optimizePackageImports
+
+ GET /onboarding 200 in 1043ms (next.js: 271ms, proxy.ts: 120ms, application-code: 652ms)
+ GET /onboarding 200 in 192ms (next.js: 9ms, proxy.ts: 9ms, application-code: 174ms)
+ GET /api/v1/install-prompt 200 in 2.2s (next.js: 2.2s, proxy.ts: 5ms, application-code: 17ms)
+ GET /compare 200 in 211ms (next.js: 39ms, proxy.ts: 9ms, application-code: 163ms)
+ GET /settings 200 in 328ms (next.js: 35ms, proxy.ts: 5ms, application-code: 288ms)
+ GET /policy-approvals 200 in 745ms (next.js: 689ms, proxy.ts: 4ms, application-code: 52ms)
+ GET /events 200 in 66ms (next.js: 18ms, proxy.ts: 3ms, application-code: 45ms)
+ GET /events?class=remediation 200 in 51ms (next.js: 3ms, proxy.ts: 4ms, application-code: 44ms)
+ GET /events?agent=aidr_ag_demo_cursor 200 in 48ms (next.js: 2ms, proxy.ts: 3ms, application-code: 43ms)
+ GET /incidents 200 in 94ms (next.js: 22ms, proxy.ts: 3ms, application-code: 68ms)
+ GET /onboarding 200 in 45ms (next.js: 2ms, proxy.ts: 3ms, application-code: 40ms)
+ GET /onboarding 200 in 42ms (next.js: 1928µs, proxy.ts: 3ms, application-code: 37ms)
+ GET /api/v1/install-prompt 200 in 30ms (next.js: 14ms, proxy.ts: 3ms, application-code: 14ms)
+ GET /compare 200 in 53ms (next.js: 2ms, proxy.ts: 3ms, application-code: 48ms)
+ GET /settings 200 in 67ms (next.js: 3ms, proxy.ts: 6ms, application-code: 57ms)
+ GET /policy-approvals 200 in 59ms (next.js: 4ms, proxy.ts: 5ms, application-code: 50ms)
+ GET /events 200 in 94ms (next.js: 3ms, proxy.ts: 4ms, application-code: 86ms)
+ GET /events?class=remediation 200 in 56ms (next.js: 3ms, proxy.ts: 5ms, application-code: 48ms)
+ GET /events?agent=aidr_ag_demo_cursor 200 in 120ms (next.js: 3ms, proxy.ts: 7ms, application-code: 110ms)
+ GET /incidents 200 in 318ms (next.js: 13ms, proxy.ts: 16ms, application-code: 289ms)
+ GET /policy-rollout 200 in 155ms (next.js: 35ms, proxy.ts: 5ms, application-code: 115ms)
+ GET /delivery-failures 200 in 175ms (next.js: 30ms, proxy.ts: 5ms, application-code: 141ms)
+ GET /onboarding 200 in 40ms (next.js: 2ms, proxy.ts: 3ms, application-code: 35ms)
+ GET /onboarding 200 in 49ms (next.js: 1889µs, proxy.ts: 3ms, application-code: 44ms)
+ GET /api/v1/install-prompt 200 in 25ms (next.js: 13ms, proxy.ts: 3ms, application-code: 9ms)
+ GET /compare 200 in 50ms (next.js: 2ms, proxy.ts: 4ms, application-code: 44ms)
+ GET /settings 200 in 55ms (next.js: 2ms, proxy.ts: 3ms, application-code: 50ms)
+ GET /policy-approvals 200 in 50ms (next.js: 2ms, proxy.ts: 5ms, application-code: 43ms)
+ GET /events 200 in 84ms (next.js: 3ms, proxy.ts: 4ms, application-code: 77ms)
+ GET /events?class=remediation 200 in 99ms (next.js: 3ms, proxy.ts: 5ms, application-code: 92ms)
+ GET /events?agent=aidr_ag_demo_cursor 200 in 59ms (next.js: 4ms, proxy.ts: 6ms, application-code: 49ms)
+ GET /incidents 200 in 57ms (next.js: 3ms, proxy.ts: 3ms, application-code: 52ms)
+ GET /policy-rollout 200 in 100ms (next.js: 3ms, proxy.ts: 5ms, application-code: 92ms)
+ GET /delivery-failures 200 in 54ms (next.js: 3ms, proxy.ts: 3ms, application-code: 48ms)
+ GET /onboarding 200 in 75ms (next.js: 3ms, proxy.ts: 5ms, application-code: 67ms)
+[?25h

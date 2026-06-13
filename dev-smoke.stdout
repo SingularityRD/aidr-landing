@@ -1,0 +1,15 @@
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:4568
+- Network:       http://192.168.1.3:4568
+- Environments: .env.local
+✓ Ready in 350ms
+- Experiments (use with caution):
+  · clientTraceMetadata
+  · optimizePackageImports
+
+ GET /onboarding 200 in 865ms (next.js: 413ms, proxy.ts: 77ms, application-code: 374ms)
+ GET /onboarding 200 in 121ms (next.js: 4ms, proxy.ts: 7ms, application-code: 110ms)
+ GET /api/v1/install-prompt 200 in 2.4s (next.js: 2.4s, proxy.ts: 3ms, application-code: 19ms)
+ GET /compare 200 in 268ms (next.js: 27ms, proxy.ts: 4ms, application-code: 237ms)
+ GET /settings 200 in 294ms (next.js: 42ms, proxy.ts: 7ms, application-code: 245ms)
+ GET /policy-approvals 200 in 94ms (next.js: 28ms, proxy.ts: 5ms, application-code: 61ms)

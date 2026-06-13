@@ -1,22 +1,34 @@
 "use client";
 
-const KEY = "aidr.postAuthReturnTo.v1";
+import {
+	buildReturnToCookie,
+	clearReturnToCookie,
+	POST_AUTH_RETURN_TO_KEY,
+	readCookieValue,
+} from "./return-to-utils";
 
 export function setClientPostAuthReturnTo(path: string) {
-  try {
-    localStorage.setItem(KEY, path);
-  } catch {
-    // ignore
-  }
+	try {
+		document.cookie = buildReturnToCookie(path);
+	} catch {
+		// ignore
+	}
+}
+
+export function clearClientPostAuthReturnTo() {
+	try {
+		document.cookie = clearReturnToCookie();
+	} catch {
+		// ignore
+	}
 }
 
 export function takeClientPostAuthReturnTo(): string | null {
-  try {
-    const v = localStorage.getItem(KEY);
-    if (!v) return null;
-    localStorage.removeItem(KEY);
-    return v;
-  } catch {
-    return null;
-  }
+	try {
+		const cookie = readCookieValue(document.cookie, POST_AUTH_RETURN_TO_KEY);
+		document.cookie = clearReturnToCookie();
+		return cookie;
+	} catch {
+		return null;
+	}
 }

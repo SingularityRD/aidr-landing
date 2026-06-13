@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { getSupabaseBrowserClient } from "../../../lib/supabase/client";
+import { getFirebaseBrowserClient } from "../../../lib/firebase/database-client";
 
 export default function WaitlistPage() {
   const [name, setName] = useState("");
@@ -74,8 +73,8 @@ export default function WaitlistPage() {
               setBusy(true);
               setStatus(null);
               try {
-                const supabase = getSupabaseBrowserClient();
-                const res = await supabase.functions.invoke("waitlist-signup", {
+                const firebaseClient = getFirebaseBrowserClient();
+                const res = await firebaseClient.functions.invoke("waitlist-signup", {
                   method: "POST",
                   body: payload,
                 });

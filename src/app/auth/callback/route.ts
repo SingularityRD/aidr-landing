@@ -1,87 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+
+/**
+ * Validate returnTo to prevent open redirect attacks.
+ * Only allows relative paths starting with / and no protocol/host injection.
+ */
+function isSafeReturnTo(value: string | null): value is string {
+  if (!value) return false;
+  // Must start with / and be a relative path (no //, no protocol)
+  if (!value.startsWith("/")) return false;
+  // Reject protocol-relative URLs like //evil.com
+  if (value.startsWith("//")) return false;
+  // Reject any embedded colon (could be javascript:, http:, etc.)
+  if (value.includes(":")) return false;
+  // Must be a valid pathname
+  try {
+    URL.parse(value, "http://localhost");
+  } catch {
+    return false;
+  }
+  return true;
+}
 
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
-
-  // Get the returnTo from cookies - cookies() returns a Promise in Next.js 15+
-  const cookieStore = await cookies();
-  const returnTo = cookieStore.get("aidr.postAuthReturnTo.v1")?.value ?? "/onboarding";
-
-  if (code) {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet: { name: string; value: string; options: Record<string, unknown> }[]) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // The `setAll` method was called from a Server Component.
-              // This can be ignored if you have middleware refreshing
-              // user sessions.
-            }
-          },
-        },
-      }
-    );
-
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (error) {
-      // Redirect to login with error
-      return NextResponse.redirect(
-        new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url)
-      );
-    }
-
-    // Clear the returnTo cookie
-    cookieStore.delete("aidr.postAuthReturnTo.v1");
-
-    // Redirect to the returnTo path or onboarding
-    const redirectTo = returnTo.startsWith("/") ? returnTo : "/onboarding";
-    return NextResponse.redirect(new URL(redirectTo, request.url));
-  }
-
-  // No code present, check if we already have a session
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-          setAll(cookiesToSet: { name: string; value: string; options: Record<string, unknown> }[]) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignore
-          }
-        },
-      },
-    }
-  );
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (session) {
-    const redirectTo = returnTo.startsWith("/") ? returnTo : "/onboarding";
-    return NextResponse.redirect(new URL(redirectTo, request.url));
-  }
-
-  // No session, redirect to login
-  return NextResponse.redirect(new URL("/login", request.url));
+  const url = new URL(request.url);
+  const returnTo = url.searchParams.get("returnTo");
+  const target = isSafeReturnTo(returnTo) ? returnTo : "/login";
+  return NextResponse.redirect(new URL(target, request.url));
 }

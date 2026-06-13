@@ -1,0 +1,6 @@
+[browser] Uncaught TypeError: Cannot read properties of null (reading 'getBoundingClientRect')
+    at drawLetters (file://C:/Users/anıl/Desktop/AIDR PROJECT/aidr-landing/.next/dev/static/chunks/src_components_LetterGlitch_tsx_0.dvchw._.js:107:53)
+    at animate (file://C:/Users/anıl/Desktop/AIDR PROJECT/aidr-landing/.next/dev/static/chunks/src_components_LetterGlitch_tsx_0.dvchw._.js:158:13)
+[browser] Uncaught TypeError: Cannot read properties of null (reading 'getBoundingClientRect')
+    at drawLetters (file://C:/Users/anıl/Desktop/AIDR PROJECT/aidr-landing/.next/dev/static/chunks/src_components_LetterGlitch_tsx_0.dvchw._.js:107:53)
+    at animate (file://C:/Users/anıl/Desktop/AIDR PROJECT/aidr-landing/.next/dev/static/chunks/src_components_LetterGlitch_tsx_0.dvchw._.js:158:13)

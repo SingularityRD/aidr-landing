@@ -1,0 +1,11 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json",
+    "ttlPolicies": [
+      { "collectionGroup": "install_codes", "field": "expires_at" },
+      { "collectionGroup": "device_codes", "field": "expires_at" },
+      { "collectionGroup": "enrollment_tokens", "field": "expires_at" }
+    ]
+  }
+}

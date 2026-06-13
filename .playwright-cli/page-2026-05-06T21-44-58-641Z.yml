@@ -1,0 +1,120 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - link "AIDR" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Pricing" [ref=e6] [cursor=pointer]:
+          - /url: /#pricing
+        - link "Features" [ref=e7] [cursor=pointer]:
+          - /url: /#features
+        - link "Compare" [ref=e8] [cursor=pointer]:
+          - /url: /compare
+        - link "Dashboard" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+        - generic "Demo User" [ref=e10]: D
+        - button "Switch to dark mode" [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+    - main [ref=e14]:
+      - navigation [ref=e15]:
+        - generic [ref=e16]:
+          - link "Connect" [ref=e17] [cursor=pointer]:
+            - /url: /onboarding
+          - link "Dashboard" [ref=e18] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Billing" [ref=e19] [cursor=pointer]:
+            - /url: /billing
+          - link "API Keys" [ref=e20] [cursor=pointer]:
+            - /url: /api-keys
+          - link "Agents" [ref=e21] [cursor=pointer]:
+            - /url: /agents
+          - link "Events" [ref=e22] [cursor=pointer]:
+            - /url: /events
+          - link "Policy Rollout" [ref=e23] [cursor=pointer]:
+            - /url: /policy-rollout
+          - link "Approvals" [ref=e24] [cursor=pointer]:
+            - /url: /policy-approvals
+          - link "Delivery" [ref=e25] [cursor=pointer]:
+            - /url: /delivery-failures
+          - link "Incidents" [ref=e26] [cursor=pointer]:
+            - /url: /incidents
+          - link "Settings" [ref=e27] [cursor=pointer]:
+            - /url: /settings
+          - button "Sign out" [ref=e29] [cursor=pointer]
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: EVENTS FEED
+          - heading "Review every decision, without losing the surrounding context." [level=1] [ref=e33]
+          - paragraph [ref=e34]: The events feed is the flight recorder for your agents. Use verdict and severity filters to inspect allow, ask, and deny decisions as they happen.
+          - generic [ref=e35]:
+            - link "Agents" [ref=e36] [cursor=pointer]:
+              - /url: /agents
+            - link "Incidents" [ref=e37] [cursor=pointer]:
+              - /url: /incidents
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]: Total
+            - generic [ref=e41]: "7"
+          - generic [ref=e42]:
+            - generic [ref=e43]: Allow
+            - generic [ref=e44]: "2"
+          - generic [ref=e45]:
+            - generic [ref=e46]: Ask
+            - generic [ref=e47]: "3"
+          - generic [ref=e48]:
+            - generic [ref=e49]: Deny
+            - generic [ref=e50]: "2"
+          - generic [ref=e51]:
+            - generic [ref=e52]: Remediation
+            - generic [ref=e53]: "1"
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - generic [ref=e56]:
+              - text: Agent
+              - textbox "Agent" [ref=e57]:
+                - /placeholder: agent id
+            - generic [ref=e58]:
+              - text: Class
+              - combobox "Class" [ref=e59]:
+                - option "All"
+                - option "Security"
+                - option "Remediation" [selected]
+                - option "Telemetry"
+            - generic [ref=e60]:
+              - text: Verdict
+              - combobox "Verdict" [ref=e61]:
+                - option "All" [selected]
+                - option "Allow"
+                - option "Ask"
+                - option "Deny"
+            - generic [ref=e62]:
+              - text: Severity
+              - combobox "Severity" [ref=e63]:
+                - option "All" [selected]
+                - option "Info"
+                - option "Warning"
+                - option "Critical"
+          - article [ref=e65]:
+            - generic [ref=e66]:
+              - generic [ref=e67]:
+                - generic [ref=e68]: Policy drift mark reviewed
+                - generic [ref=e69]:
+                  - text: agent
+                  - link "aidr_ag_demo_cursor" [ref=e70] [cursor=pointer]:
+                    - /url: /agents/aidr_ag_demo_cursor
+              - generic [ref=e71]:
+                - generic [ref=e72]: remediation
+                - generic [ref=e73]: allow · info
+            - generic [ref=e74]: 06.05.2026 14:19:30
+            - generic [ref=e75]: Admin marked this policy drift item as reviewed.
+            - generic [ref=e76]:
+              - link "Current agent policy cache" [ref=e77] [cursor=pointer]:
+                - /url: /agents/aidr_ag_demo_cursor#runtime-policy-cache
+              - link "Policy rollout settings" [ref=e78] [cursor=pointer]:
+                - /url: /settings#policy-rollout
+              - link "Rollout drilldown" [ref=e79] [cursor=pointer]:
+                - /url: /policy-rollout
+              - link "Triggering security events" [ref=e80] [cursor=pointer]:
+                - /url: /events?agent=aidr_ag_demo_cursor&class=security
+            - generic [ref=e81]: "{ \"category\": \"policy_rollout\", \"artifact\": \"aidr_ag_demo_cursor\", \"action\": \"mark_reviewed\", \"actor_user_id\": \"demo-user-001\", \"current_policy_version\": \"pol_demo_locked_down\", \"alert_label\": \"stale\", \"reason\": \"Policy cache is stale beyond the …"
+  - alert [ref=e82]

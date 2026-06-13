@@ -11,26 +11,26 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getInitialTheme(): Theme {
+    if (typeof window === "undefined") {
+        return "light";
+    }
+
+    const stored = window.localStorage.getItem("theme") as Theme | null;
+    if (stored === "light" || stored === "dark") {
+        return stored;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setTheme] = useState<Theme>("light");
-    const [mounted, setMounted] = useState(false);
+    const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
     useEffect(() => {
-        setMounted(() => true);
-        const stored = localStorage.getItem("theme") as Theme | null;
-        if (stored) {
-            setTheme(() => stored);
-        } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            setTheme(() => "dark");
-        }
-    }, []);
-
-    useEffect(() => {
-        if (mounted) {
-            document.documentElement.setAttribute("data-theme", theme);
-            localStorage.setItem("theme", theme);
-        }
-    }, [theme, mounted]);
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+    }, [theme]);
 
     const toggleTheme = () => {
         setTheme((prev: Theme) => (prev === "light" ? "dark" : "light"));

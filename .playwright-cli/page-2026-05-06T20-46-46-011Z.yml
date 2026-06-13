@@ -1,0 +1,278 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - link "AIDR" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Pricing" [ref=e6] [cursor=pointer]:
+          - /url: /#pricing
+        - link "Features" [ref=e7] [cursor=pointer]:
+          - /url: /#features
+        - link "Compare" [ref=e8] [cursor=pointer]:
+          - /url: /compare
+        - link "Dashboard" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+        - generic "Demo User" [ref=e10]: D
+        - button "Switch to dark mode" [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+    - main [ref=e14]:
+      - navigation [ref=e15]:
+        - generic [ref=e16]:
+          - link "Connect" [ref=e17] [cursor=pointer]:
+            - /url: /onboarding
+          - link "Dashboard" [ref=e18] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Billing" [ref=e19] [cursor=pointer]:
+            - /url: /billing
+          - link "API Keys" [ref=e20] [cursor=pointer]:
+            - /url: /api-keys
+          - link "Agents" [ref=e21] [cursor=pointer]:
+            - /url: /agents
+          - link "Events" [ref=e22] [cursor=pointer]:
+            - /url: /events
+          - link "Policy Rollout" [ref=e23] [cursor=pointer]:
+            - /url: /policy-rollout
+          - link "Approvals" [ref=e24] [cursor=pointer]:
+            - /url: /policy-approvals
+          - link "Delivery" [ref=e25] [cursor=pointer]:
+            - /url: /delivery-failures
+          - link "Incidents" [ref=e26] [cursor=pointer]:
+            - /url: /incidents
+          - link "Settings" [ref=e27] [cursor=pointer]:
+            - /url: /settings
+          - button "Sign out" [ref=e29] [cursor=pointer]
+      - generic [ref=e30]:
+        - generic [ref=e43]:
+          - generic [ref=e44]: PREFERENCES
+          - heading "Privacy-first defaults, without hidden telemetry." [level=1] [ref=e45]
+          - paragraph [ref=e46]: AIDR keeps telemetry minimal by default. Adjust the signal level and notification summaries for the account that owns these connected agents.
+        - generic [ref=e47]:
+          - generic [ref=e48]: Telemetry mode
+          - generic [ref=e49]: Minimal mode keeps payload details reduced. Standard mode preserves more context for debugging and internal analysis.
+          - generic [ref=e50]:
+            - button "Minimal selected Metadata, verdict, severity, and timestamps only." [ref=e51] [cursor=pointer]:
+              - generic [ref=e52]:
+                - generic [ref=e53]: Minimal
+                - generic [ref=e54]: selected
+              - generic [ref=e55]: Metadata, verdict, severity, and timestamps only.
+            - button "Standard Includes richer payload details for debugging sessions." [ref=e56] [cursor=pointer]:
+              - generic [ref=e58]: Standard
+              - generic [ref=e59]: Includes richer payload details for debugging sessions.
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - generic [ref=e62]:
+              - generic [ref=e63]: Runtime policy
+              - generic [ref=e64]: Set the default decision AIDR should apply before an agent runs a tool call. MCP policy is stored with the account so connector defaults and dashboard controls can share the same contract.
+            - generic [ref=e65]: local-first policy
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - generic [ref=e68]:
+                - generic [ref=e69]: Commands
+                - generic [ref=e70]: Shell execution, scripts, and local process starts.
+              - generic [ref=e71]:
+                - button "allow" [ref=e72] [cursor=pointer]
+                - button "ask" [ref=e73] [cursor=pointer]
+                - button "deny" [ref=e74] [cursor=pointer]
+            - generic [ref=e75]:
+              - generic [ref=e76]:
+                - generic [ref=e77]: Files
+                - generic [ref=e78]: Writes, deletes, and sensitive path reads.
+              - generic [ref=e79]:
+                - button "allow" [ref=e80] [cursor=pointer]
+                - button "ask" [ref=e81] [cursor=pointer]
+                - button "deny" [ref=e82] [cursor=pointer]
+            - generic [ref=e83]:
+              - generic [ref=e84]:
+                - generic [ref=e85]: URLs
+                - generic [ref=e86]: Outbound fetches, callbacks, and download targets.
+              - generic [ref=e87]:
+                - button "allow" [ref=e88] [cursor=pointer]
+                - button "ask" [ref=e89] [cursor=pointer]
+                - button "deny" [ref=e90] [cursor=pointer]
+            - generic [ref=e91]:
+              - generic [ref=e92]:
+                - generic [ref=e93]: Packages
+                - generic [ref=e94]: Installers, lockfile changes, and supply-chain checks.
+              - generic [ref=e95]:
+                - button "allow" [ref=e96] [cursor=pointer]
+                - button "ask" [ref=e97] [cursor=pointer]
+                - button "deny" [ref=e98] [cursor=pointer]
+            - generic [ref=e99]:
+              - generic [ref=e100]:
+                - generic [ref=e101]: Outputs
+                - generic [ref=e102]: Response scanning, PII redaction, and secret leakage.
+              - generic [ref=e103]:
+                - button "allow" [ref=e104] [cursor=pointer]
+                - button "ask" [ref=e105] [cursor=pointer]
+                - button "deny" [ref=e106] [cursor=pointer]
+        - generic [ref=e107]:
+          - generic [ref=e108]: MCP enforcement
+          - generic [ref=e109]: AIDR treats MCP servers as execution surfaces. Unknown servers can require approval, and risky tool calls can be denied even when the server itself is known.
+          - generic [ref=e110]:
+            - generic [ref=e111]:
+              - generic [ref=e112]:
+                - generic [ref=e113]: Unknown MCP servers
+                - generic [ref=e114]: Servers not seen in your allow, ask, or deny lists.
+              - generic [ref=e115]:
+                - button "allow" [ref=e116] [cursor=pointer]
+                - button "ask" [ref=e117] [cursor=pointer]
+                - button "deny" [ref=e118] [cursor=pointer]
+            - generic [ref=e119]:
+              - generic [ref=e120]:
+                - generic [ref=e121]: Risky MCP tool calls
+                - generic [ref=e122]: Shell wrappers, broad filesystem access, network egress, and credential access.
+              - generic [ref=e123]:
+                - button "allow" [ref=e124] [cursor=pointer]
+                - button "ask" [ref=e125] [cursor=pointer]
+                - button "deny" [ref=e126] [cursor=pointer]
+          - generic [ref=e127]:
+            - generic [ref=e128]:
+              - generic [ref=e129]: Allowed servers
+              - generic [ref=e130]: Auto-approve trusted read-only servers.
+              - textbox "Allowed servers Auto-approve trusted read-only servers." [ref=e131]:
+                - /placeholder: filesystem github memory
+            - generic [ref=e132]:
+              - generic [ref=e133]: Approval servers
+              - generic [ref=e134]: Ask before these servers execute tools.
+              - textbox "Approval servers Ask before these servers execute tools." [ref=e135]:
+                - /placeholder: filesystem github memory
+            - generic [ref=e136]:
+              - generic [ref=e137]: Denied servers
+              - generic [ref=e138]: Block these servers before execution.
+              - textbox "Denied servers Block these servers before execution." [ref=e139]:
+                - /placeholder: filesystem github memory
+        - generic [ref=e140]:
+          - generic [ref=e141]:
+            - generic [ref=e142]:
+              - generic [ref=e143]: Policy-as-code contract
+              - generic [ref=e144]: This is the normalized contract agents fetch before enforcing shell, filesystem, network, package, output, and MCP tool-call decisions.
+            - generic [ref=e145]: aidr.policy.v1
+          - generic [ref=e146]: "{ \"schema_version\": \"aidr.policy.v1\", \"decision_order\": [ \"deny\", \"ask\", \"allow\" ], \"scopes\": { \"shell\": { \"default\": \"ask\", \"covers\": [ \"shell commands\", \"scripts\", \"process starts\" ] }, \"filesystem\": { \"default\": \"ask\", \"covers\": [ \"file writes\", \"file deletes\", \"sensitive file reads\" ] }, \"network\": { \"default\": \"ask\", \"covers\": [ \"outbound URLs\", \"downloads\", \"callback endpoints\" ] }, \"packages\": { \"default\": \"ask\", \"covers\": [ \"package installs\", \"lockfile changes\", \"supply-chain checks\" ] }, \"outputs\": { \"default\": \"allow\", \"covers\": [ \"secret leakage\", \"PII redaction\", \"model output scanning\" ] }, \"mcp\": { \"unknown_server\": \"ask\", \"risky_tool_call\": \"deny\", \"allow_servers\": [], \"ask_servers\": [], \"deny_servers\": [], \"risk_hints\": [ \"shell wrapper\", \"broad filesystem access\", \"network egress\", \"credential access\" ] } } }"
+          - generic [ref=e147]:
+            - textbox "Policy-as-code JSON editor" [ref=e148]: "{ \"schema_version\": \"aidr.policy.v1\", \"decision_order\": [ \"deny\", \"ask\", \"allow\" ], \"scopes\": { \"shell\": { \"default\": \"ask\", \"covers\": [ \"shell commands\", \"scripts\", \"process starts\" ] }, \"filesystem\": { \"default\": \"ask\", \"covers\": [ \"file writes\", \"file deletes\", \"sensitive file reads\" ] }, \"network\": { \"default\": \"ask\", \"covers\": [ \"outbound URLs\", \"downloads\", \"callback endpoints\" ] }, \"packages\": { \"default\": \"ask\", \"covers\": [ \"package installs\", \"lockfile changes\", \"supply-chain checks\" ] }, \"outputs\": { \"default\": \"allow\", \"covers\": [ \"secret leakage\", \"PII redaction\", \"model output scanning\" ] }, \"mcp\": { \"unknown_server\": \"ask\", \"risky_tool_call\": \"deny\", \"allow_servers\": [], \"ask_servers\": [], \"deny_servers\": [], \"risk_hints\": [ \"shell wrapper\", \"broad filesystem access\", \"network egress\", \"credential access\" ] } } }"
+            - generic [ref=e252]: Two-person policy approval requested.
+            - generic [ref=e149]:
+              - text: Reviewer user IDs
+              - textbox "Reviewer user IDs Leave blank for any teammate except the requester; add IDs to assign exact reviewers." [ref=e150]:
+                - /placeholder: user_2, user_3
+              - generic [ref=e151]: Leave blank for any teammate except the requester; add IDs to assign exact reviewers.
+            - generic [ref=e152]:
+              - button "Validate and apply" [ref=e153] [cursor=pointer]
+              - button "Copy JSON" [ref=e154] [cursor=pointer]
+              - button "Publish with approval" [ref=e155] [cursor=pointer]
+              - button "Request two-person approval" [active] [ref=e156] [cursor=pointer]
+              - button "Reset editor" [ref=e157] [cursor=pointer]
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - generic [ref=e160]:
+              - generic [ref=e161]: Policy rollout
+              - generic [ref=e162]: Runtime agents report the cached account policy they will enforce before tool calls run.
+            - generic [ref=e163]:
+              - link "Open rollout drilldown" [ref=e164] [cursor=pointer]:
+                - /url: /policy-rollout
+              - generic [ref=e165]: version pol_demo_published
+          - generic [ref=e166]:
+            - generic [ref=e167]:
+              - generic [ref=e168]: current
+              - generic [ref=e169]: "0"
+            - generic [ref=e170]:
+              - generic [ref=e171]: fresh
+              - generic [ref=e172]: "1"
+            - generic [ref=e173]:
+              - generic [ref=e174]: stale
+              - generic [ref=e175]: "1"
+            - generic [ref=e176]:
+              - generic [ref=e177]: unknown
+              - generic [ref=e178]: "1"
+          - generic [ref=e179]:
+            - generic [ref=e180]:
+              - generic [ref=e181]:
+                - generic [ref=e182]:
+                  - generic [ref=e183]: Policy drift alerts
+                  - generic [ref=e184]: 3 agents need cache refresh or review.
+                - generic [ref=e185]: audit-backed
+              - generic [ref=e253]:
+                - generic [ref=e254]:
+                  - generic [ref=e255]: Claude Code - laptop
+                  - generic [ref=e256]: Agent is enforcing pol_demo_locked_down, not the current pol_demo_published policy.
+                - generic [ref=e257]:
+                  - button "Mark reviewed" [ref=e258] [cursor=pointer]
+                  - link "Open agent" [ref=e259] [cursor=pointer]:
+                    - /url: /agents/aidr_ag_demo_claude
+                  - link "Review events" [ref=e260] [cursor=pointer]:
+                    - /url: /events?agent=aidr_ag_demo_claude
+                  - button "Reconnect" [ref=e261] [cursor=pointer]
+              - generic [ref=e186]:
+                - generic [ref=e187]:
+                  - generic [ref=e188]: Cursor workspace
+                  - generic [ref=e189]: Policy cache is stale beyond the 5m SLA.
+                - generic [ref=e190]:
+                  - button "Mark reviewed" [ref=e191] [cursor=pointer]
+                  - link "Open agent" [ref=e192] [cursor=pointer]:
+                    - /url: /agents/aidr_ag_demo_cursor
+                  - link "Review events" [ref=e193] [cursor=pointer]:
+                    - /url: /events?agent=aidr_ag_demo_cursor
+                  - button "Reconnect" [ref=e194] [cursor=pointer]
+              - generic [ref=e195]:
+                - generic [ref=e196]:
+                  - generic [ref=e197]: OpenCode sandbox
+                  - generic [ref=e198]: Agent has not reported a usable runtime policy cache.
+                - generic [ref=e199]:
+                  - button "Mark reviewed" [ref=e200] [cursor=pointer]
+                  - link "Open agent" [ref=e201] [cursor=pointer]:
+                    - /url: /agents/aidr_ag_demo_opencode
+                  - link "Review events" [ref=e202] [cursor=pointer]:
+                    - /url: /events?agent=aidr_ag_demo_opencode
+                  - button "Reconnect" [ref=e203] [cursor=pointer]
+            - generic [ref=e204]:
+              - generic [ref=e205]:
+                - generic [ref=e206]:
+                  - generic [ref=e207]: Claude Code - laptop
+                  - generic [ref=e208]: claude-code
+                - generic [ref=e209]: Policy pol_demo_locked_down · age 1m · ttl 41m
+              - generic "source valid" [ref=e210]: policy fresh
+            - generic [ref=e211]:
+              - generic [ref=e212]:
+                - generic [ref=e213]:
+                  - generic [ref=e214]: Cursor workspace
+                  - generic [ref=e215]: cursor
+                - generic [ref=e216]: Policy pol_demo_standard · age 8h · ttl 0s
+              - generic "source expired" [ref=e217]: policy stale
+            - generic [ref=e218]:
+              - generic [ref=e219]:
+                - generic [ref=e220]:
+                  - generic [ref=e221]: OpenCode sandbox
+                  - generic [ref=e222]: opencode
+                - generic [ref=e223]: Policy not reported · age unknown · ttl unknown
+              - generic "source missing" [ref=e224]: policy unknown
+        - generic [ref=e225]:
+          - generic [ref=e226]: Security export
+          - generic [ref=e227]: Send deny and critical runtime events to a SIEM or webhook receiver. Payload export stays off unless you explicitly enable it.
+          - generic [ref=e228]:
+            - checkbox "Enable deny and critical event export" [ref=e229]
+            - generic [ref=e230]: Enable deny and critical event export
+          - generic [ref=e231]:
+            - generic [ref=e232]: Webhook URL
+            - textbox "Webhook URL" [ref=e233]:
+              - /placeholder: https://siem.example/webhooks/aidr
+          - generic [ref=e234]:
+            - checkbox "Include raw event payloads in exports" [ref=e235]
+            - generic [ref=e236]: Include raw event payloads in exports
+        - generic [ref=e237]:
+          - generic [ref=e238]: Notifications
+          - generic [ref=e239]: Keep summaries on for reminders about approvals, reconnections, and billing changes.
+          - generic [ref=e240]:
+            - checkbox "Enable notification summaries" [checked] [ref=e241]
+            - generic [ref=e242]: Enable notification summaries
+        - generic [ref=e243]:
+          - generic [ref=e244]:
+            - generic [ref=e245]:
+              - generic [ref=e246]: Save changes
+              - generic [ref=e247]: Your preferences apply to future sessions and dashboard views.
+            - generic [ref=e248]: Last saved 06.05.2026 23:46:38
+          - generic [ref=e249]:
+            - button "Save settings" [ref=e250] [cursor=pointer]
+            - generic [ref=e251]: Changes are stored in your Firebase-backed account profile.
+  - button "Open Next.js Dev Tools" [ref=e38] [cursor=pointer]:
+    - img [ref=e39]
+  - alert [ref=e42]

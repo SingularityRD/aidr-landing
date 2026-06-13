@@ -169,7 +169,7 @@ export default function IsometricDiagram({ compact = false }: { compact?: boolea
     }, 400);
   }, [animating, order]);
 
-  const handleClick = (_visualIdx: number) => {
+  const handleClick = () => {
     cycleTopCard();
   };
 
@@ -184,7 +184,6 @@ export default function IsometricDiagram({ compact = false }: { compact?: boolea
 
   const maxDx = Math.abs(STACK_DX) * (functions.length - 1);
   const maxDy = Math.abs(STACK_DY) * (functions.length - 1);
-  const stackW = CARD_SIZE + maxDx;
   const stackH = CARD_SIZE + maxDy;
 
   const isLargeDesktop = windowWidth >= 1400 && windowWidth < 1800;
@@ -277,7 +276,7 @@ export default function IsometricDiagram({ compact = false }: { compact?: boolea
                 }
                 onMouseLeave={() => setHoveredIdx(null)}
                 onClick={() =>
-                  visualIdx === 0 && !animating ? handleClick(0) : undefined
+                  visualIdx === 0 && !animating ? handleClick() : undefined
                 }
                 style={{
                   position: "absolute",

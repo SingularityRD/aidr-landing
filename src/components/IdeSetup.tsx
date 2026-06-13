@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
 const ides = [
   { id: "claude", label: "Claude Code", file: "CLAUDE.md" },
@@ -9,62 +9,6 @@ const ides = [
   { id: "openclaw", label: "OpenClaw", file: "OpenClaw Plugin" },
   { id: "opencode", label: "OpenCode", file: "OpenCode Plugin" },
 ];
-
-function highlightJson(json: string): ReactNode[] {
-  const tokenRegex =
-    /"(?:[^"\\]|\\.)*"\s*:|"(?:[^"\\]|\\.)*"|\btrue\b|\bfalse\b|\bnull\b|-?\d+(?:\.\d+)?|[{}\[\]:,]/g;
-
-  const parts: ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = tokenRegex.exec(json)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(json.slice(lastIndex, match.index));
-    }
-
-    const token = match[0];
-    if (token.endsWith(":")) {
-      parts.push(
-        <span key={match.index} style={{ color: "var(--json-key)" }}>
-          {token}
-        </span>,
-      );
-    } else if (token.startsWith('"')) {
-      parts.push(
-        <span key={match.index} style={{ color: "var(--json-string)" }}>
-          {token}
-        </span>,
-      );
-    } else if (token === "true" || token === "false" || token === "null") {
-      parts.push(
-        <span key={match.index} style={{ color: "var(--json-value)" }}>
-          {token}
-        </span>,
-      );
-    } else if (/^-?\d/.test(token)) {
-      parts.push(
-        <span key={match.index} style={{ color: "var(--json-value)" }}>
-          {token}
-        </span>,
-      );
-    } else {
-      parts.push(
-        <span key={match.index} style={{ color: "var(--json-punct)" }}>
-          {token}
-        </span>,
-      );
-    }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < json.length) {
-    parts.push(json.slice(lastIndex));
-  }
-
-  return parts;
-}
 
 export default function IdeSetup() {
   const [activeIde, setActiveIde] = useState("claude");

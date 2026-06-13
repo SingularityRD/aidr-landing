@@ -1,384 +1,311 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { getSession } from "@/lib/auth/session";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSmartUser } from "@/hooks/useSmartUser";
+import { isDemoMode } from "@/lib/demo";
+import { demoAgents, demoEvents } from "@/lib/demo-data";
+import { getOnboardingProgress } from "@/lib/onboarding-progress";
 
-type Runtime = "claude-code" | "cursor" | "vscode" | "openclaw" | "opencode";
-
-type DeviceStartResult = {
-  verification_url: string;
-  user_code: string;
-  device_code: string;
-  expires_at: string;
-  interval_seconds?: number;
-};
-
-type DevicePollResult =
-  | { status: "authorization_pending" }
-  | { status: "authorized"; enrollment_token?: string | null };
-
-function promptForRuntime(runtime: Runtime): string {
-  const common = [
-    "You are installing Singularity AIDR (AI Agent Detection and Response).",
-    "Goal: enable protection and then link this installation to my account via the device authorization flow.",
-    "",
-    "Rules:",
-    "- Do not exfiltrate secrets.",
-    "- Prefer the official install path for this runtime.",
-    "- If you need authorization: show me the short code + verification URL and wait.",
-    "",
-  ].join("\n");
-
-  if (runtime === "claude-code") {
-    return [
-      common,
-      "Runtime: Claude Code",
-      "Install:",
-      "- /plugin install aidr@aidr",
-      "After install, start a session so AIDR can request authorization.",
-    ].join("\n");
-  }
-
-  if (runtime === "openclaw") {
-    return [
-      common,
-      "Runtime: OpenClaw",
-      "Install:",
-      "- openclaw plugins install @singularityrd/aidr-openclaw",
-    ].join("\n");
-  }
-
-  if (runtime === "opencode") {
-    return [
-      common,
-      "Runtime: OpenCode",
-      "Install:",
-      "- Link the plugin directory in OpenCode config.",
-    ].join("\n");
-  }
-
-  if (runtime === "cursor") {
-    return [
-      common,
-      "Runtime: Cursor",
-      "Install:",
-      '- Install the Singularity AIDR extension (VSIX) for Cursor, then run "Enable protection".',
-    ].join("\n");
-  }
-
-  return [
-    common,
-    "Runtime: VS Code",
-    "Install:",
-    '- Install the Singularity AIDR extension (VSIX) for VS Code, then run "Enable protection".',
-  ].join("\n");
+function panelStyle(): React.CSSProperties {
+  return {
+    border: "1px solid var(--panel-border)",
+    borderRadius: 18,
+    background: "var(--panel-bg)",
+    boxShadow: "0 12px 36px var(--shadow-color)",
+  };
 }
 
 export default function OnboardingPage() {
-  const [runtime, setRuntime] = useState<Runtime>("claude-code");
-  const [pilotStatus, setPilotStatus] = useState<string>("loading");
-  const [device, setDevice] = useState<DeviceStartResult | null>(null);
-  const [poll, setPoll] = useState<DevicePollResult | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  const prompt = useMemo(() => promptForRuntime(runtime), [runtime]);
-  const intervalSeconds = Math.max(2, Math.min(10, Number(device?.interval_seconds ?? 5)));
+  const { user, isLoaded, isSignedIn } = useSmartUser();
+  const router = useRouter();
+  const demoMode = isDemoMode();
+  const [agentCount, setAgentCount] = useState<number>(() => (demoMode ? demoAgents.length : 0));
+  const [eventCount, setEventCount] = useState<number>(() => (demoMode ? demoEvents.length : 0));
+  const [installPrompt, setInstallPrompt] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [promptCopied, setPromptCopied] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    async function checkAuth() {
-      const session = await getSession();
-      if (!cancelled) {
-        setIsAuthenticated(!!session);
-      }
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      router.push("/login");
+      return;
     }
-    checkAuth();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (demoMode) return;
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      const supabase = getSupabaseBrowserClient();
-      const res = await supabase.functions.invoke("pilot-status", { method: "GET" });
-      if (cancelled) return;
-      if (res.error) {
-        setPilotStatus("unknown");
-        return;
-      }
-      const data = (res.data ?? {}) as Record<string, unknown>;
-      setPilotStatus(typeof data.status === "string" ? String(data.status) : "unknown");
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    let t: number | null = null;
-
-    async function tick() {
-      if (!device) return;
-      try {
-        const supabase = getSupabaseBrowserClient();
-        const res = await supabase.functions.invoke("device-poll", {
+    async function loadProgress() {
+      const [agentsRes, eventsRes] = await Promise.all([
+        fetch("/api/v1/agents/count"),
+        fetch("/api/v1/query", {
           method: "POST",
-          body: { device_code: device.device_code },
-        });
-        if (cancelled) return;
-        if (res.error) {
-          setPoll(null);
-          setError(res.error.message);
-          return;
-        }
-        const data = (res.data ?? {}) as Record<string, unknown>;
-        const status = String(data.status ?? "authorization_pending");
-        // Back-compat: server may return "approved" for the final state.
-        if (status === "authorized" || status === "approved") {
-          setPoll({
-            status: "authorized",
-            enrollment_token:
-              typeof data.enrollment_token === "string" ? data.enrollment_token : null,
-          });
-          return;
-        }
-        setPoll({ status: "authorization_pending" });
-      } catch (e) {
-        if (!cancelled) setError(String(e));
-      }
-      t = window.setTimeout(tick, intervalSeconds * 1000);
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ table: "events", action: "select", head: true, count: "exact" }),
+        }),
+      ]);
+      const agentsData = await agentsRes.json();
+      const eventsData = await eventsRes.json();
+      setAgentCount(Number(agentsData.count ?? 0));
+      setEventCount(Number(eventsData.count ?? 0));
     }
 
-    if (device) {
-      t = window.setTimeout(tick, 500);
+    loadProgress().catch(() => {
+      setAgentCount(0);
+      setEventCount(0);
+    });
+  }, [demoMode, isLoaded, isSignedIn, router]);
+
+  async function generatePrompt() {
+    const res = await fetch("/api/v1/install-prompt");
+    const data = await res.json();
+    setInstallPrompt(data.prompt);
+  }
+
+  function copyPrompt() {
+    if (installPrompt) {
+      navigator.clipboard.writeText(installPrompt);
+      setPromptCopied(true);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
+  }
 
-    return () => {
-      cancelled = true;
-      if (t != null) window.clearTimeout(t);
-    };
-  }, [device, intervalSeconds]);
+  const progress = getOnboardingProgress({
+    promptCopied,
+    agents: Array.from({ length: agentCount }, () => ({ status: "pending" })),
+    events: Array.from({ length: eventCount }, (_, index) => ({ id: `event-${index}` })),
+  });
 
-  const canAuthorize = pilotStatus === "approved";
-
-  const handleGenerateCode = async () => {
-    setBusy(true);
-    setError(null);
-    setPoll(null);
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const res = await supabase.functions.invoke("device-start", { method: "POST" });
-      if (res.error) {
-        setError(res.error.message);
-        return;
-      }
-      const data = (res.data ?? {}) as Record<string, unknown>;
-      const result: DeviceStartResult = {
-        verification_url: String(data.verification_url ?? "/verify"),
-        user_code: String(data.user_code ?? ""),
-        device_code: String(data.device_code ?? ""),
-        expires_at: String(data.expires_at ?? ""),
-        interval_seconds:
-          typeof data.interval_seconds === "number" ? data.interval_seconds : undefined,
-      };
-      setDevice(result);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (isAuthenticated === false) {
+  if (!isLoaded) {
     return (
-      <div className="stack">
-        <div className="card">
-          <h1>Authentication Required</h1>
-          <p className="muted">Please sign in to access the onboarding flow.</p>
-          <div className="row" style={{ marginTop: 20 }}>
-            <Link href="/login?returnTo=/onboarding" className="button">
-              Sign In
-            </Link>
-          </div>
+      <div className="stack" style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 20px" }}>
+        <div style={{ ...panelStyle(), padding: 40, textAlign: "center" }}>
+          <div style={{ color: "var(--text-faint)" }}>Loading…</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="stack">
-      <div className="card">
-        <h1>Onboarding</h1>
-        <p className="muted">
-          Pick your runtime, paste the prompt into your agent, then authorize once in your browser.
-        </p>
-        {pilotStatus !== "approved" ? (
-          <div className="notice">
-            <div className="muted small">Pilot status</div>
-            <div className="mono">{pilotStatus}</div>
-            {pilotStatus !== "loading" ? (
-              <div className="row" style={{ marginTop: 10 }}>
-                <Link className="button button-secondary" href="/pilot">
-                  View / request pilot
-                </Link>
+    <div className="stack" style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 20px" }}>
+      {/* Hero */}
+      <section style={{ ...panelStyle(), padding: 28 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+          <div style={{ maxWidth: 780 }}>
+            <div style={{ color: "var(--text-faint)", fontSize: 12, letterSpacing: "0.08em" }}>
+              ONBOARDING
+            </div>
+            <h1 style={{ fontSize: 38, lineHeight: "44px", margin: "10px 0 10px", color: "var(--text-primary)" }}>
+              Welcome{user?.firstName ? `, ${user.firstName}` : ""}
+            </h1>
+            <p style={{ color: "var(--text-secondary)", lineHeight: "26px", maxWidth: 900, margin: 0 }}>
+              You have <b>1 free agent</b> included. Copy the prompt below and paste it into any AI agent
+              runtime — Claude Code, Cursor, VS Code, OpenClaw, or OpenCode.
+            </p>
+            {demoMode && (
+              <div style={{ marginTop: 8, fontSize: 12, color: "var(--accent)", fontWeight: 500 }}>
+                🎮 Demo Mode — no real auth required
               </div>
-            ) : null}
+            )}
           </div>
-        ) : null}
-      </div>
-
-      <div className="cols">
-        <div className="card">
-          <h2>1) Choose runtime</h2>
-          <div className="row" style={{ flexWrap: "wrap" }}>
-            {(
-              [
-                ["claude-code", "Claude Code"],
-                ["cursor", "Cursor"],
-                ["vscode", "VS Code"],
-                ["openclaw", "OpenClaw"],
-                ["opencode", "OpenCode"],
-              ] as Array<[Runtime, string]>
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                className={`button ${runtime === id ? "" : "button-secondary"}`}
-                type="button"
-                onClick={() => setRuntime(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="notice" style={{ marginTop: 12 }}>
-            <div className="muted small">Prompt to give your agent</div>
-            <textarea
-              className="input mono"
-              style={{ minHeight: 220, resize: "vertical" }}
-              readOnly
-              value={prompt}
-            />
-            <div className="muted small" style={{ marginTop: 10 }}>
-              This prompt focuses the agent on install + authorization without asking you to
-              manually copy API keys.
+          <div
+            style={{
+              minWidth: 260,
+              padding: 18,
+              borderRadius: 16,
+              border: "1px solid var(--panel-border)",
+              background: "linear-gradient(180deg, rgba(56,98,232,0.10), rgba(56,98,232,0.02))",
+            }}
+          >
+            <div style={{ color: "var(--text-faint)", fontSize: 12 }}>Connected agents</div>
+            <div className="mono" style={{ marginTop: 8, fontSize: 30, color: "var(--text-primary)" }}>
+              {agentCount}
+            </div>
+            <div style={{ marginTop: 12, color: "var(--text-faint)", fontSize: 12, lineHeight: "20px" }}>
+              Each connected installation gets its own identity, audit trail, and seat usage tracking.
             </div>
           </div>
         </div>
+      </section>
 
-        <div className="card">
-          <h2>2) Authorize</h2>
-          <p className="muted">
-            Generate a short code, then sign in and authorize in your browser. Your runtime will
-            complete enrollment automatically.
-          </p>
-
-          <div className="row" style={{ marginTop: 12, flexWrap: "wrap" }}>
-            <button
-              className="button"
-              type="button"
-              disabled={busy || !canAuthorize}
-              onClick={handleGenerateCode}
+      <section style={{ ...panelStyle(), padding: 24, marginTop: 18 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div>
+            <h2 style={{ fontSize: 20, color: "var(--text-primary)", margin: 0 }}>
+              First-run checklist
+            </h2>
+            <div style={{ marginTop: 6, color: "var(--text-secondary)", fontSize: 13 }}>
+              {progress.completed} of {progress.total} complete
+            </div>
+          </div>
+          <div
+            className="mono"
+            style={{
+              minWidth: 72,
+              textAlign: "right",
+              color: "var(--text-primary)",
+              fontSize: 22,
+              fontWeight: 600,
+            }}
+          >
+            {progress.percent}%
+          </div>
+        </div>
+        <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
+          {progress.steps.map((step) => (
+            <div
+              key={step.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "12px 14px",
+                borderRadius: 12,
+                border: "1px solid var(--panel-border)",
+                background: step.complete ? "rgba(34,197,94,0.10)" : "var(--bg-secondary)",
+              }}
             >
-              Generate code
-            </button>
-            <Link className="button button-secondary" href="/verify">
-              Open verify page
-            </Link>
-          </div>
-
-          {device ? (
-            <div className="notice">
-              <div className="muted small">Your code</div>
-              <div className="mono" style={{ fontSize: 18 }}>
-                {device.user_code}
-              </div>
-              <div className="muted small" style={{ marginTop: 8 }}>
-                Verification URL
-              </div>
-              <div className="mono">{device.verification_url}</div>
-              <div className="muted small" style={{ marginTop: 8 }}>
-                Expires:{" "}
-                <span className="mono">
-                  {device.expires_at ? new Date(device.expires_at).toLocaleString() : "soon"}
-                </span>
-              </div>
-
-              <div className="row" style={{ marginTop: 12, flexWrap: "wrap" }}>
-                <a
-                  className="button"
-                  href={device.verification_url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Authorize in browser
-                </a>
-                <Link
-                  className="button button-secondary"
-                  href={`/verify?code=${encodeURIComponent(device.user_code)}`}
-                >
-                  I already opened it
-                </Link>
-              </div>
-
-              {poll?.status === "authorization_pending" ? (
-                <div className="muted small" style={{ marginTop: 12 }}>
-                  Waiting for authorization…
-                </div>
-              ) : null}
-
-              {poll?.status === "authorized" ? (
-                <div className="notice" style={{ marginTop: 12 }}>
-                  <div>
-                    <b>Authorized.</b> Start your agent runtime now. It will complete enrollment and
-                    enable protection.
-                  </div>
-                  {poll.enrollment_token ? (
-                    <div className="muted small" style={{ marginTop: 8 }}>
-                      Fallback enrollment token (advanced):
-                      <div className="mono" style={{ marginTop: 6 }}>
-                        {poll.enrollment_token}
-                      </div>
-                    </div>
-                  ) : null}
-                  <div className="row" style={{ marginTop: 12 }}>
-                    <Link className="button button-secondary" href="/agents">
-                      View agents
-                    </Link>
-                    <Link className="button button-secondary" href="/incidents">
-                      View incidents
-                    </Link>
-                  </div>
-                  <div className="row" style={{ marginTop: 12 }}>
-                    <a 
-                      className="button" 
-                      href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Open Full Dashboard →
-                    </a>
-                  </div>
-                </div>
-              ) : null}
+              <div
+                aria-hidden="true"
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: "50%",
+                  border: step.complete ? "1px solid #22c55e" : "1px solid var(--panel-border)",
+                  background: step.complete ? "#22c55e" : "transparent",
+                  flex: "0 0 auto",
+                }}
+              />
+              <div style={{ color: "var(--text-primary)", fontWeight: 600 }}>{step.label}</div>
             </div>
-          ) : null}
-
-          {error ? <div className="notice notice-danger">{error}</div> : null}
+          ))}
         </div>
-      </div>
+      </section>
 
-      <div className="row" style={{ marginTop: "20px" }}>
-        <Link href="/" className="muted" style={{ fontSize: "14px" }}>
-          ← Back to home
-        </Link>
-      </div>
+      {/* Install Prompt Card */}
+      <section style={{ ...panelStyle(), padding: 24, marginTop: 18 }}>
+        <h2 style={{ fontSize: 22, color: "var(--text-primary)", marginBottom: 8 }}>
+          🛡️ Protect Your First Agent
+        </h2>
+        <p style={{ color: "var(--text-secondary)", lineHeight: "24px", margin: "0 0 16px" }}>
+          This prompt works in <b>any</b> AI runtime. Copy, paste, and your agent installs AIDR automatically.
+        </p>
+
+        {!installPrompt ? (
+          <button
+            onClick={generatePrompt}
+            style={{
+              padding: "12px 24px",
+              borderRadius: 12,
+              border: "none",
+              background: "#3862e8",
+              color: "white",
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            Generate Install Prompt
+          </button>
+        ) : (
+          <>
+            <pre
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--panel-border)",
+                borderRadius: 12,
+                padding: 16,
+                fontSize: 13,
+                lineHeight: "22px",
+                color: "var(--text-primary)",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                marginBottom: 12,
+              }}
+            >
+              {installPrompt}
+            </pre>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button
+                onClick={copyPrompt}
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: 10,
+                  border: "1px solid var(--panel-border)",
+                  background: copied ? "rgba(34,197,94,0.12)" : "var(--surface-soft)",
+                  color: copied ? "#22c55e" : "var(--text-primary)",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                {copied ? "✅ Copied!" : "📋 Copy Prompt"}
+              </button>
+              <button
+                onClick={generatePrompt}
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: 10,
+                  border: "1px solid var(--panel-border)",
+                  background: "transparent",
+                  color: "var(--text-secondary)",
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                🔄 New Prompt
+              </button>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Setup Steps */}
+      <section style={{ ...panelStyle(), padding: 24, marginTop: 18 }}>
+        <h3 style={{ fontSize: 18, color: "var(--text-primary)", marginBottom: 12 }}>How it works</h3>
+        <div style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: "26px" }}>
+          1. Click <b>Generate Install Prompt</b> above<br />
+          2. Copy the prompt and paste it into your AI agent chat<br />
+          3. Your agent runs the install command automatically<br />
+          4. Click the authorization link (you&apos;re already signed in)<br />
+          5. Done — your agent is now protected 🛡️
+        </div>
+      </section>
+
+      {/* Upgrade CTA if free seat used */}
+      {agentCount >= 1 && (
+        <section
+          style={{
+            ...panelStyle(),
+            padding: 24,
+            marginTop: 18,
+            background: "linear-gradient(135deg, rgba(56,98,232,0.08), rgba(118,75,162,0.08))",
+          }}
+        >
+          <h3 style={{ fontSize: 18, color: "var(--text-primary)", marginBottom: 8 }}>
+            Need more agents?
+          </h3>
+          <p style={{ color: "var(--text-secondary)", lineHeight: "24px", margin: "0 0 12px" }}>
+            Upgrade to Pro for <b>$2/month per agent</b>. Protect your entire AI toolkit.
+          </p>
+          <a
+            href="/billing"
+            style={{
+              display: "inline-block",
+              padding: "10px 20px",
+              borderRadius: 10,
+              border: "none",
+              background: "#3862e8",
+              color: "white",
+              textDecoration: "none",
+              fontSize: 14,
+              fontWeight: 500,
+            }}
+          >
+            Upgrade to Pro →
+          </a>
+        </section>
+      )}
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { createServerSupabaseClient } from "../../lib/supabase/server";
+import Link from "next/link";
 import Header from "../../components/Header";
 import Background from "../../components/Background";
+import AuthGate from "../../components/AuthGate";
+import SignOutButton from "../../components/SignOutButton";
 
 export const metadata: Metadata = {
   title: "Dashboard | Singularity AIDR",
@@ -14,18 +15,6 @@ export default async function AppLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Check authentication server-side
-  const supabase = await createServerSupabaseClient();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    // Redirect to login if not authenticated
-    redirect("/login");
-  }
-
   return (
     <div className="relative w-full min-h-screen">
       <Background />
@@ -60,7 +49,21 @@ export default async function AppLayout({
               alignItems: "center",
             }}
           >
-            <a
+            <Link
+              href="/onboarding"
+              style={{
+                color: "var(--text-primary)",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+                transition: "background 0.2s",
+              }}
+            >
+              Connect
+            </Link>
+            <Link
               href="/dashboard"
               style={{
                 color: "var(--text-primary)",
@@ -73,8 +76,8 @@ export default async function AppLayout({
               }}
             >
               Dashboard
-            </a>
-            <a
+            </Link>
+            <Link
               href="/billing"
               style={{
                 color: "var(--text-primary)",
@@ -87,8 +90,8 @@ export default async function AppLayout({
               }}
             >
               Billing
-            </a>
-            <a
+            </Link>
+            <Link
               href="/api-keys"
               style={{
                 color: "var(--text-primary)",
@@ -101,33 +104,114 @@ export default async function AppLayout({
               }}
             >
               API Keys
-            </a>
+            </Link>
+            <Link
+              href="/agents"
+              style={{
+                color: "var(--text-primary)",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+                transition: "background 0.2s",
+              }}
+            >
+              Agents
+            </Link>
+            <Link
+              href="/events"
+              style={{
+                color: "var(--text-primary)",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+                transition: "background 0.2s",
+              }}
+            >
+              Events
+            </Link>
+            <Link
+              href="/policy-rollout"
+              style={{
+                color: "var(--text-primary)",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+                transition: "background 0.2s",
+              }}
+            >
+              Policy Rollout
+            </Link>
+            <Link
+              href="/policy-approvals"
+              style={{
+                color: "var(--text-primary)",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+                transition: "background 0.2s",
+              }}
+            >
+              Approvals
+            </Link>
+            <Link
+              href="/delivery-failures"
+              style={{
+                color: "var(--text-primary)",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+                transition: "background 0.2s",
+              }}
+            >
+              Delivery
+            </Link>
+            <Link
+              href="/incidents"
+              style={{
+                color: "var(--text-primary)",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+                transition: "background 0.2s",
+              }}
+            >
+              Incidents
+            </Link>
+            <Link
+              href="/settings"
+              style={{
+                color: "var(--text-primary)",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+                transition: "background 0.2s",
+              }}
+            >
+              Settings
+            </Link>
             <div style={{ marginLeft: "auto" }}>
-              <form
-                action="/auth/signout"
-                method="post"
-              >
-                <button
-                  type="submit"
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: 6,
-                    border: "1px solid var(--panel-border)",
-                    background: "transparent",
-                    color: "var(--text-secondary)",
-                    fontSize: 14,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  Sign out
-                </button>
-              </form>
+              <SignOutButton />
             </div>
           </div>
         </nav>
 
-        {children}
+        <AuthGate>
+          {children}
+        </AuthGate>
       </main>
     </div>
   );

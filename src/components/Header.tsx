@@ -1,13 +1,19 @@
 "use client";
 
-import DarkModeToggle from "./DarkModeToggle";
+import Link from "next/link";
+import { SignInButton, UserButton } from "@clerk/nextjs";
+import { useSmartUser } from "../hooks/useSmartUser";
+import { isDemoMode } from "../lib/demo";
 
 export default function Header() {
+  const { isSignedIn, isLoaded } = useSmartUser();
+  const demo = isDemoMode();
+
   return (
     <nav
       className="nav-bar flex justify-between items-center"
       style={{
-        padding: "26px 100px 20px",
+        padding: "18px 24px",
         zIndex: 10,
         position: "sticky",
         top: 0,
@@ -17,40 +23,111 @@ export default function Header() {
         borderBottom: "1px solid var(--footer-border)",
       }}
     >
-      <span
+      <Link
+        href="/"
         style={{
           fontSize: 22,
-          fontWeight: 500,
+          fontWeight: 600,
           lineHeight: "28px",
           color: "var(--text-primary)",
+          textDecoration: "none",
+          letterSpacing: "-0.02em",
         }}
       >
-        Singularity AIDR
-      </span>
-      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <a href="#pricing" style={{ color: "var(--text-secondary)", textDecoration: "none" }}>
+        AIDR
+      </Link>
+      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <Link href="/#pricing" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
           Pricing
-        </a>
-        <a href="#pilot" style={{ color: "var(--text-secondary)", textDecoration: "none" }}>
-          Pilot
-        </a>
-        <a href="#install" style={{ color: "var(--text-secondary)", textDecoration: "none" }}>
-          Install Prompt
-        </a>
-        <a
-          href={process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://127.0.0.1:4173/login"}
-          style={{
-            padding: "8px 12px",
-            borderRadius: 10,
-            border: "1px solid var(--panel-border)",
-            color: "var(--text-primary)",
-            textDecoration: "none",
-            background: "var(--toggle-bg)",
-          }}
-        >
-          Sign in
-        </a>
-        <DarkModeToggle />
+        </Link>
+        <Link href="/#features" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
+          Features
+        </Link>
+        <Link href="/compare" style={{ color: "var(--text-secondary)", textDecoration: "none", fontSize: 14 }}>
+          Compare
+        </Link>
+
+        {isLoaded && isSignedIn ? (
+          <>
+            <Link
+              href="/dashboard"
+              style={{
+                padding: "8px 12px",
+                borderRadius: 12,
+                border: "1px solid var(--panel-border)",
+                color: "var(--text-primary)",
+                textDecoration: "none",
+                background: "var(--toggle-bg)",
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              Dashboard
+            </Link>
+            {demo ? (
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #3862e8, #764ba2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+                title="Demo User"
+              >
+                D
+              </div>
+            ) : (
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: { width: 32, height: 32 },
+                  },
+                }}
+              />
+            )}
+          </>
+        ) : (
+          demo ? (
+            <Link
+              href="/login"
+              style={{
+                padding: "8px 14px",
+                borderRadius: 12,
+                border: "1px solid var(--text-primary)",
+                background: "var(--text-primary)",
+                color: "var(--bg-primary)",
+                fontSize: 14,
+                fontWeight: 500,
+                textDecoration: "none",
+              }}
+            >
+              Sign in
+            </Link>
+          ) : (
+            <SignInButton mode="modal">
+              <button
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 12,
+                  border: "1px solid var(--text-primary)",
+                  background: "var(--text-primary)",
+                  color: "var(--bg-primary)",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                Sign in
+              </button>
+            </SignInButton>
+          )
+        )}
       </div>
     </nav>
   );

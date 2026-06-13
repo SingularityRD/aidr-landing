@@ -1,0 +1,44 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]: ONBOARDING
+        - heading "Welcome, Demo" [level=1] [ref=e9]
+        - paragraph [ref=e10]: You have 1 free agent included. Copy the prompt below and paste it into any AI agent runtime — Claude Code, Cursor, VS Code, OpenClaw, or OpenCode.
+        - generic [ref=e11]: 🎮 Demo Mode — no real auth required
+      - generic [ref=e12]:
+        - generic [ref=e13]: Connected agents
+        - generic [ref=e14]: "3"
+        - generic [ref=e15]: Each connected installation gets its own identity, audit trail, and seat usage tracking.
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - heading "First-run checklist" [level=2] [ref=e19]
+          - generic [ref=e20]: 3 of 4 complete
+        - generic [ref=e21]: 75%
+      - generic [ref=e22]:
+        - generic [ref=e25]: Prompt copied
+        - generic [ref=e28]: Agent installed
+        - generic [ref=e31]: Device verified
+        - generic [ref=e34]: First event received
+    - generic [ref=e35]:
+      - heading "🛡️ Protect Your First Agent" [level=2] [ref=e36]
+      - paragraph [ref=e37]: This prompt works in any AI runtime. Copy, paste, and your agent installs AIDR automatically.
+      - generic [ref=e47]: "AIDR Security Enrollment 1) Install the AIDR connector: ```bash npx @singularityrd/aidr-setup --code 0254BEF9 ``` 2) Verify the device in your browser (must be the same account): http://localhost:4567/auth/0254BEF9 Security note: If you did not request this enrollment, do not proceed. Account: Manage seats & billing: http://localhost:4567/billing"
+      - generic [ref=e48]:
+        - button "📋 Copy Prompt" [ref=e49] [cursor=pointer]
+        - button "🔄 New Prompt" [ref=e50] [cursor=pointer]
+    - generic [ref=e39]:
+      - heading "How it works" [level=3] [ref=e40]
+      - generic [ref=e41]:
+        - text: 1. Click Generate Install Prompt above
+        - text: 2. Copy the prompt and paste it into your AI agent chat
+        - text: 3. Your agent runs the install command automatically
+        - text: 4. Click the authorization link (you're already signed in)
+        - text: 5. Done — your agent is now protected 🛡️
+    - generic [ref=e42]:
+      - heading "Need more agents?" [level=3] [ref=e43]
+      - paragraph [ref=e44]: Upgrade to Pro for $2/month per agent. Protect your entire AI toolkit.
+      - link "Upgrade to Pro →" [ref=e45] [cursor=pointer]:
+        - /url: /billing
+  - alert [ref=e46]

@@ -1,6 +1,6 @@
 import { createCheckout } from "./lemon-client";
 
-export type ProviderType = "lemon_squeezy";
+export type ProviderType = "polar" | "lemon_squeezy";
 
 export interface PaymentResult {
   url: string;
@@ -30,27 +30,31 @@ interface ProviderConfig {
   features: string[];
 }
 
-// Region-based provider configuration
+// Region-based provider configuration. Polar is the target production billing
+// provider; Lemon Squeezy is kept as a legacy compatibility path.
 const REGION_CONFIG: Record<string, ProviderConfig> = {
   US: {
-    primary: "lemon_squeezy",
+    primary: "polar",
     supportedCurrencies: ["USD", "EUR", "GBP"],
-    features: ["Tax compliance", "Instant invoicing"],
+    features: ["Subscription management", "Webhook-signed entitlement sync"],
   },
   EU: {
-    primary: "lemon_squeezy",
+    primary: "polar",
     supportedCurrencies: ["EUR", "USD", "GBP"],
-    features: ["VAT handling", "Multi-currency"],
+    features: ["Global SaaS billing", "Seat enforcement"],
   },
   GLOBAL: {
-    primary: "lemon_squeezy",
+    primary: "polar",
     supportedCurrencies: ["USD", "EUR", "GBP", "JPY", "AUD", "CAD"],
-    features: ["Global coverage", "Subscription"],
+    features: ["Global coverage", "Subscription management"],
   },
 };
 
 /**
- * Create payment/subscription via Lemon Squeezy
+ * Legacy payment/subscription helper via Lemon Squeezy.
+ *
+ * New production checkout paths should use the Polar-backed API routes. This
+ * helper remains for old deployments until Lemon-era code is removed.
  */
 export async function createPayment(
   userId: string,
@@ -75,7 +79,7 @@ export async function createPayment(
 }
 
 /**
- * Get available providers (Lemon Squeezy only)
+ * Get available providers.
  */
 export function getAvailableProviders(): Array<{
   id: ProviderType;
@@ -85,15 +89,20 @@ export function getAvailableProviders(): Array<{
 }> {
   return [
     {
-      id: "lemon_squeezy",
-      name: "🍋 Lemon Squeezy",
+      id: "polar",
+      name: "Polar",
       features: [
-        "Global payments",
         "Tax compliance",
-        "Instant invoicing",
         "Subscription management",
+        "Webhook-signed entitlement sync",
+        "Seat enforcement",
       ],
       recommended: true,
+    },
+    {
+      id: "lemon_squeezy",
+      name: "Lemon Squeezy (legacy)",
+      features: ["Legacy checkout compatibility"],
     },
   ];
 }

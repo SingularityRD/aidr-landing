@@ -1,0 +1,123 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - link "AIDR" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "Pricing" [ref=e6] [cursor=pointer]:
+          - /url: /#pricing
+        - link "Features" [ref=e7] [cursor=pointer]:
+          - /url: /#features
+        - link "Compare" [ref=e8] [cursor=pointer]:
+          - /url: /compare
+        - link "Dashboard" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+        - generic "Demo User" [ref=e10]: D
+    - main [ref=e11]:
+      - navigation [ref=e12]:
+        - generic [ref=e13]:
+          - link "Connect" [ref=e14] [cursor=pointer]:
+            - /url: /onboarding
+          - link "Dashboard" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Billing" [ref=e16] [cursor=pointer]:
+            - /url: /billing
+          - link "API Keys" [ref=e17] [cursor=pointer]:
+            - /url: /api-keys
+          - link "Agents" [ref=e18] [cursor=pointer]:
+            - /url: /agents
+          - link "Events" [ref=e19] [cursor=pointer]:
+            - /url: /events
+          - link "Policy Rollout" [ref=e20] [cursor=pointer]:
+            - /url: /policy-rollout
+          - link "Approvals" [ref=e21] [cursor=pointer]:
+            - /url: /policy-approvals
+          - link "Delivery" [ref=e22] [cursor=pointer]:
+            - /url: /delivery-failures
+          - link "Incidents" [ref=e23] [cursor=pointer]:
+            - /url: /incidents
+          - link "Settings" [ref=e24] [cursor=pointer]:
+            - /url: /settings
+          - button "Sign out" [ref=e26] [cursor=pointer]
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]: POLICY APPROVALS
+          - heading "Policy publish approvals" [level=1] [ref=e30]
+          - paragraph [ref=e31]: Review signed policy-as-code requests before they change local agent enforcement across commands, packages, output scanning, and MCP tool calls.
+          - generic [ref=e32]:
+            - link "Policy editor" [ref=e33] [cursor=pointer]:
+              - /url: /settings#policy-as-code
+            - link "Rollout state" [ref=e34] [cursor=pointer]:
+              - /url: /policy-rollout
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]: Total
+            - generic [ref=e38]: "0"
+          - generic [ref=e39]:
+            - generic [ref=e40]: Pending
+            - generic [ref=e41]: "0"
+          - generic [ref=e42]:
+            - generic [ref=e43]: Published
+            - generic [ref=e44]: "0"
+          - generic [ref=e45]:
+            - generic [ref=e46]: Expired
+            - generic [ref=e47]: "0"
+        - generic [ref=e49]: Loading policy approvals...
+  - contentinfo [ref=e50]:
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - link "AIDR" [ref=e53] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=e54]: AI Agent Detection & Response. Secure your AI coding agents with edge-first protection.
+      - generic [ref=e55]:
+        - generic [ref=e56]: Product
+        - generic [ref=e57]:
+          - link "Features" [ref=e58] [cursor=pointer]:
+            - /url: /#features
+          - link "How It Works" [ref=e59] [cursor=pointer]:
+            - /url: /#how-it-works
+          - link "Pricing" [ref=e60] [cursor=pointer]:
+            - /url: /pricing
+          - link "FAQ" [ref=e61] [cursor=pointer]:
+            - /url: /#faq
+      - generic [ref=e62]:
+        - generic [ref=e63]: Platforms
+        - generic [ref=e64]:
+          - link "Claude Code" [ref=e65] [cursor=pointer]:
+            - /url: /#platforms
+          - link "Cursor" [ref=e66] [cursor=pointer]:
+            - /url: /#platforms
+          - link "VS Code" [ref=e67] [cursor=pointer]:
+            - /url: /#platforms
+          - link "OpenClaw" [ref=e68] [cursor=pointer]:
+            - /url: /#platforms
+      - generic [ref=e69]:
+        - generic [ref=e70]: Resources
+        - generic [ref=e71]:
+          - link "Documentation" [ref=e72] [cursor=pointer]:
+            - /url: https://github.com/singularityrd/aidr
+          - link "GitHub" [ref=e73] [cursor=pointer]:
+            - /url: https://github.com/singularityrd/aidr
+          - link "Status" [ref=e74] [cursor=pointer]:
+            - /url: /
+          - link "Compare" [ref=e75] [cursor=pointer]:
+            - /url: /compare
+      - generic [ref=e76]:
+        - generic [ref=e77]: Company
+        - generic [ref=e78]:
+          - link "Privacy" [ref=e79] [cursor=pointer]:
+            - /url: /
+          - link "Terms" [ref=e80] [cursor=pointer]:
+            - /url: /
+          - link "Security" [ref=e81] [cursor=pointer]:
+            - /url: /#security
+          - link "Contact" [ref=e82] [cursor=pointer]:
+            - /url: mailto:hello@singularityrd.com
+    - generic [ref=e83]:
+      - generic [ref=e84]: © 2026 Singularity Research & Development. All rights reserved.
+      - generic [ref=e85]:
+        - link "GitHub" [ref=e86] [cursor=pointer]:
+          - /url: https://github.com/singularityrd/aidr
+        - generic [ref=e87]: Polar • Stripe
+  - button "Open Next.js Dev Tools" [ref=e93] [cursor=pointer]:
+    - img [ref=e94]
