@@ -31,6 +31,54 @@ const detectionLayers = [
     desc: "Scans other installed plugins for threats at session start. Detects plugin tampering, suspicious configurations, and command surface exposure.",
     icon: "🧩",
   },
+  {
+    title: "AIDR Scan Engine",
+    desc: "Four deep-scan engines: CVE matcher (1,354+ entries), MCP 14-category risk scorer, agent workflow scanner, and LLM jailbreak evaluation. All in-process, sub-50ms.",
+    icon: "🛡️",
+  },
+];
+
+const engines = [
+  {
+    name: "Edge Guard",
+    desc: "URL reputation, local heuristics, package supply-chain, plugin scanning. Always on, all plans.",
+    tag: "Free",
+  },
+  {
+    name: "CVE Scanner",
+    desc: "1,354+ CVE entries with semver-based matching. Critical, high, medium, low severity scoring. CVE mirror updated daily.",
+    tag: "Pro",
+  },
+  {
+    name: "MCP Risk Scorer",
+    desc: "14 MCP risk categories: RCE, shell access, file write, network egress, data exfiltration, credential access, and 8 more. Per-tool scoring.",
+    tag: "Pro",
+  },
+  {
+    name: "Agent Workflow Scanner",
+    desc: "Detects prompt injection, privilege escalation, data leakage, tool abuse in agent configurations and runtime flows.",
+    tag: "Pro",
+  },
+  {
+    name: "Jailbreak Eval",
+    desc: "8 LLM red-team test suites: direct jailbreak (DAN), role-play bypass, prompt leak, ChatML/Llama token injection. 30-second eval.",
+    tag: "Pro",
+  },
+  {
+    name: "DLP Engine",
+    desc: "50+ PII patterns (email, phone, IBAN, TC kimlik, kredi kartı) + secret detection (AWS, GitHub, OpenAI, Slack, Stripe). Redacted logs.",
+    tag: "Pro",
+  },
+  {
+    name: "Policy Engine",
+    desc: "YAML DSL for custom rules. Live preview, audit-grade. 5-minute rule authoring. No Colang, no proprietary language.",
+    tag: "Pro",
+  },
+  {
+    name: "Output Validator",
+    desc: "Zod/JSONSchema validation for every LLM output. Silent schema breaks → automatic deny + log. 1-click template gallery.",
+    tag: "Pro",
+  },
 ];
 
 const features = [
@@ -133,35 +181,43 @@ const threatCategories = [
 const faqs = [
   {
     q: "What is AIDR?",
-    a: "Singularity AIDR (AI Agent Detection & Response) is a lightweight security layer that intercepts tool calls made by AI coding agents — like Bash commands, file writes, and web requests — and checks them against multiple threat detection layers before they execute.",
+    a: "Singularity AIDR is a closed-source AI agent security platform with 8 engines in one binary: Edge Guard, CVE Scanner (1,354+ CVEs), MCP 14-category Risk Scorer, Agent Workflow Scanner, Jailbreak Eval, DLP Engine, Policy Engine, and Output Validator. Pro plan includes every engine — AIDR Scan full.",
   },
   {
-    q: "Does AIDR require cloud connectivity?",
-    a: "No. Detection runs locally via YAML-based heuristics. Cloud-based URL reputation is optional and privacy-preserving — no API key needed. Agents with offline grace continue working within a signed cache window even when disconnected.",
-  },
-  {
-    q: "What platforms does AIDR support?",
-    a: "Claude Code, Cursor, VS Code, OpenClaw, and OpenCode. Each platform gets native hooks that intercept tool calls at the appropriate integration point.",
+    q: "What is AIDR Scan?",
+    a: "AIDR Scan is the deep-scan sub-product of AIDR, derived from Tencent AI-Infra-Guard (Apache 2.0). It runs as a native in-process TypeScript engine — no Go sidecar, no Python bridge, no HTTP. 1,354+ CVE entries, 14 MCP risk categories, 8 jailbreak test suites, 334 rule engine patterns, all sub-50ms.",
   },
   {
     q: "Is AIDR free?",
-    a: "1 agent is always free. Additional agents are $5/agent/month (Pro plan), or $4/agent/month billed yearly. Enterprise plans include org-wide policy distribution, audit exports, and dedicated support.",
+    a: "1 agent is free forever (Edge Guard). Pro is $5/agent/month ($4/agent/month yearly) and includes every AIDR Scan engine — CVE, MCP, Agent, Jailbreak, DLP, Policy, Output Validator. No feature gates on Pro. Enterprise is custom (SSO, SOC2, on-prem, SLA).",
+  },
+  {
+    q: "Does AIDR require cloud connectivity?",
+    a: "No. AIDR Scan runs entirely in-process — CVE index, MCP categories, threat rules, agent patterns, all loaded from a 165 KB JSON bundle. No outbound HTTP, no sidecar calls. URL reputation is optional and privacy-preserving. Edge agents keep working offline within the signed cache window.",
+  },
+  {
+    q: "What platforms does AIDR support?",
+    a: "Claude Code, Cursor, VS Code, OpenClaw, OpenCode, and any custom agent via the AIDR SDK (TypeScript, Python, Go). Each platform gets native hooks that intercept tool calls at the appropriate integration point. Single binary, ~5 MB, signed with cosign.",
+  },
+  {
+    q: "Is AIDR open source?",
+    a: "No. AIDR is closed-source, audited, and verified. The binary is cosign-signed (SLSA Level 3), every release publishes a CycloneDX SBOM, and we run an annual third-party pen test (NCC Group). The Apache 2.0 attribution for AI-Infra-Guard (Tencent Zhuque Lab) is preserved in NOTICE.",
   },
   {
     q: "How is my data handled?",
-    a: "AIDR is privacy-first. Threat rules are data-driven YAML files — no hardcoded patterns. Audit logs automatically redact PII and secrets. The URL reputation API is anonymous and requires no API key. No code, file contents, or prompts are sent to external services.",
+    a: "AIDR is privacy-first. Detection runs locally. Audit logs automatically redact PII and secrets. The URL reputation API is anonymous. No code, file contents, or prompts are sent to external services. SOC2 Type II in progress. DPA available for Enterprise.",
   },
   {
     q: "Can AIDR break my agent?",
-    a: "AIDR is designed to never break the agent. Every internal error path returns an allow verdict. If the URL reputation API is down, it falls back to heuristics only. Extensions always exit with code 0, and the host decides whether to block based on the JSON response.",
+    a: "No. AIDR is designed to never break the agent. Every internal error path returns an allow verdict. If the URL reputation API is down, it falls back to heuristics only. The AIDR Scan engine returns a catalog result offline and live probes only via the SaaS worker pool.",
   },
   {
     q: "How do I install AIDR?",
-    a: "Install with a single prompt in your AI coding tool. For Claude Code: /plugin install aidr@aidr. On first run, you'll see a verification code and URL — sign in, approve the device, and you're protected.",
+    a: "Three ways. (1) Install script: curl -fsSL aidr.dev/install.sh | sh (Unix) or irm aidr.dev/install.ps1 | iex (Windows). (2) Claude Code prompt: /plugin install aidr@aidr. (3) SDK: npm i @aidr/sdk, pip install aidr-sdk, or go get github.com/singularityrd/aidr/sdk.",
   },
   {
     q: "What payment methods do you accept?",
-    a: "We use Polar as our payment provider, which supports global payments including credit/debit cards, Apple Pay, and Google Pay. All transactions are processed securely — we never store your payment details.",
+    a: "Polar handles all billing globally — credit/debit cards, Apple Pay, Google Pay, SEPA, ACH. Polar is a Merchant of Record, so we can serve Türkiye, EU, and global customers with proper tax/VAT. Enterprise can pay by invoice/wire.",
   },
 ];
 
@@ -317,7 +373,7 @@ export default function Home() {
             }}
           >
             <div style={{ ...sectionLabel, marginBottom: 12 }}>
-              Edge-first AI Agent Detection & Response
+              Closed-source · 8 engines · 1 binary · Sub-50ms
             </div>
             <h1
               style={{
@@ -329,7 +385,7 @@ export default function Home() {
                 fontWeight: 600,
               }}
             >
-              Security layer for your AI coding agents.
+              Stop AI agent attacks at the edge.
             </h1>
             <p
               style={{
@@ -339,11 +395,9 @@ export default function Home() {
                 fontSize: 15,
               }}
             >
-              Singularity AIDR protects every tool call your AI agent makes — 
-              shell commands, file operations, network requests, and MCP actions. 
-              Install by prompt, authorize in browser, and go live in minutes. 
-              <strong style={{ color: "var(--text-primary)" }}> 1 agent free forever.</strong> 
-              Additional agents <strong style={{ color: "var(--text-primary)" }}>$5/agent/month</strong>.
+              AIDR + AIDR Scan, one signed binary. 8 engines — Edge Guard, CVE Scanner, MCP 14-category Risk Scorer, Agent Workflow, Jailbreak Eval, DLP, Policy DSL, Output Validator. 1,354+ CVEs. 334 rule patterns. All in-process TypeScript, sub-50ms.
+              <strong style={{ color: "var(--text-primary)" }}> Pro = her şey. $5/agent/month.</strong>
+              <strong style={{ color: "var(--text-primary)" }}> 1 agent free forever.</strong>
             </p>
 
             <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "wrap" }}>
@@ -578,10 +632,11 @@ export default function Home() {
         <Section id="pricing">
           <div style={sectionLabel}>Pricing</div>
           <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6, letterSpacing: "-0.02em" }}>
-            Start free. Scale when you need to.
+            Pro = her şey. $5/agent/month.
           </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 20, maxWidth: 500 }}>
-            1 agent is always free. No time limit, no credit card required. Additional agents are <strong>$5/agent/month</strong> — or <strong>$4/agent/month</strong> billed yearly.
+          <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 20, maxWidth: 600 }}>
+            One platform. 8 engines. Every AI agent attack vector. 1 agent free forever.
+            Pro includes <strong style={{ color: "var(--text-primary)" }}>every AIDR Scan engine</strong> — no feature gates, no upsells.
           </p>
 
           <div
@@ -603,7 +658,8 @@ export default function Home() {
                 1 agent forever
               </div>
               <ul style={{ margin: 0, padding: 0, listStyle: "none", color: "var(--text-secondary)", fontSize: 13, lineHeight: "26px" }}>
-                <li>✓ Full detection engine</li>
+                <li>✓ Edge Guard (4 layers)</li>
+                <li>✓ 100 scans/day</li>
                 <li>✓ Dashboard access</li>
                 <li>✓ Incident management</li>
                 <li>✓ Audit logging</li>
@@ -611,7 +667,7 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Pro */}
+            {/* Pro = Her Şey */}
             <div
               style={{
                 ...gridCard,
@@ -621,7 +677,7 @@ export default function Home() {
               }}
             >
               <div style={{ fontSize: 12, color: "var(--accent, #3862e8)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-                Pro
+                Pro · Her Şey Dahil
                 <span
                   style={{
                     marginLeft: 8,
@@ -633,7 +689,7 @@ export default function Home() {
                     fontWeight: 600,
                   }}
                 >
-                  Recommended
+                  Most Popular
                 </span>
               </div>
               <div style={{ fontSize: 32, fontWeight: 600, color: "var(--text-primary)" }}>
@@ -641,14 +697,18 @@ export default function Home() {
                 <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-secondary)" }}>/agent/month</span>
               </div>
               <div style={{ fontSize: 13, color: "var(--text-faint)", marginTop: 2, marginBottom: 16 }}>
-                $4/agent/month billed yearly
+                $4/agent/month billed yearly · 14-day free trial
               </div>
               <ul style={{ margin: 0, padding: 0, listStyle: "none", color: "var(--text-secondary)", fontSize: 13, lineHeight: "26px" }}>
-                <li>✓ Everything in Free</li>
-                <li>✓ Unlimited agents</li>
-                <li>✓ Team management</li>
-                <li>✓ Priority support</li>
-                <li>✓ Seat-based billing</li>
+                <li>✓ <strong>8 engines (every AIDR Scan)</strong></li>
+                <li>✓ Edge Guard + CVE Scanner + MCP 14-cat</li>
+                <li>✓ Agent + Jailbreak + DLP + Policy DSL</li>
+                <li>✓ Output Validator (Zod/JSONSchema)</li>
+                <li>✓ Unlimited agents · Real-time dashboard</li>
+                <li>✓ Custom rules · Webhooks · REST API · 3 SDK</li>
+                <li>✓ Slack/Discord alerts · SIEM export</li>
+                <li>✓ 30-day audit retention</li>
+                <li>✓ Priority email support</li>
               </ul>
             </div>
 
@@ -665,10 +725,14 @@ export default function Home() {
               </div>
               <ul style={{ margin: 0, padding: 0, listStyle: "none", color: "var(--text-secondary)", fontSize: 13, lineHeight: "26px" }}>
                 <li>✓ Everything in Pro</li>
-                <li>✓ Org-wide policy distribution</li>
-                <li>✓ Audit exports & compliance</li>
-                <li>✓ Dedicated SLAs</li>
-                <li>✓ Custom integrations</li>
+                <li>✓ SAML/SSO (Okta, Azure AD, Google)</li>
+                <li>✓ Granular RBAC (4 roles)</li>
+                <li>✓ 1-year+ audit retention</li>
+                <li>✓ SLA 99.99% uptime</li>
+                <li>✓ Multi-region (US, EU, APAC)</li>
+                <li>✓ SOC2 Type II · GDPR DPA</li>
+                <li>✓ On-prem / air-gap deploy</li>
+                <li>✓ Dedicated CSM</li>
               </ul>
             </div>
           </div>
@@ -676,7 +740,10 @@ export default function Home() {
           <div
             style={{
               marginTop: 18,
-              textAlign: "center" as const,
+              display: "flex",
+              gap: 12,
+              justifyContent: "center",
+              flexWrap: "wrap",
             }}
           >
             {isLoaded && !isSignedIn ? (
@@ -684,6 +751,12 @@ export default function Home() {
                 Get Started — Free Agent
               </Link>
             ) : null}
+            <Link href="/pricing" style={{ ...btnSecondary, display: "inline-block" }}>
+              Full Pricing Details
+            </Link>
+            <Link href="/compare" style={{ ...btnSecondary, display: "inline-block" }}>
+              Compare vs Lakera · Protect AI · Lasso
+            </Link>
           </div>
         </Section>
 

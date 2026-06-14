@@ -13,31 +13,38 @@ const plans = [
     href: "/login",
     features: [
       "1 protected agent",
-      "Full detection engine (4 layers)",
-      "Dashboard access",
-      "Incident management",
-      "Audit logging with redaction",
+      "Edge Guard (4 layers: URL, heuristics, package, plugin)",
+      "100 scans/day (community rules)",
+      "Public dashboard",
       "Community support",
+      "Email support: 72h response",
     ],
     border: "var(--panel-border)",
     bg: "var(--bg-secondary)",
   },
   {
-    name: "Pro",
+    name: "Pro · Her Şey Dahil",
     price: "$5",
     period: "/agent/month",
-    desc: "For teams and power users with multiple AI agents to protect. $4/agent/month when billed yearly.",
-    cta: "Upgrade to Pro",
+    desc: "Every AIDR Scan engine, every feature, no upsells. Most popular.",
+    cta: "Start 14-day Pro Trial",
     href: "/login",
     popular: true,
     features: [
-      "Everything in Free",
-      "Unlimited agents",
-      "Team management",
-      "Priority support",
-      "Seat-based billing",
-      "Polar secure checkout",
-      "Yearly plan: $4/agent/month",
+      "✓ Edge Guard (4 layers)",
+      "✓ AIDR Scan FULL: CVE Scanner (1,354+ entries)",
+      "✓ MCP 14-Category Risk Scorer",
+      "✓ Agent Workflow Scanner",
+      "✓ Jailbreak Eval (8 suites)",
+      "✓ DLP Engine (50+ PII/secret patterns)",
+      "✓ Policy Engine (YAML DSL)",
+      "✓ Output Validator (Zod/JSONSchema)",
+      "✓ Unlimited agents · Real-time dashboard",
+      "✓ Custom rules · Webhooks · REST API",
+      "✓ 3 SDK (TypeScript, Python, Go)",
+      "✓ Slack/Discord alerts · SIEM export",
+      "✓ 30-day audit retention",
+      "✓ Priority email support (24h response)",
     ],
     border: "#3862e8",
     bg: "linear-gradient(180deg, rgba(56,98,232,0.06), var(--bg-secondary))",
@@ -46,16 +53,22 @@ const plans = [
     name: "Enterprise",
     price: "Custom",
     period: "",
-    desc: "For organizations needing fleet-wide policy control and compliance.",
-    cta: "Contact Sales",
+    desc: "For organizations needing SSO, SOC2, on-prem, SLA, and dedicated CSM.",
+    cta: "Schedule a Call",
     href: "mailto:sales@singularityrd.com",
     features: [
-      "Everything in Pro",
-      "Org-wide policy distribution",
-      "Audit exports & compliance reports",
-      "Dedicated SLAs",
-      "Custom integrations",
-      "On-premise deployment available",
+      "✓ Everything in Pro",
+      "✓ SAML/SSO (Okta, Azure AD, Google Workspace)",
+      "✓ Granular RBAC (owner / admin / member / viewer)",
+      "✓ 1-year+ audit retention (immutable, append-only)",
+      "✓ SLA 99.99% uptime, 1-hour incident response",
+      "✓ Multi-region (US, EU, APAC) data residency",
+      "✓ Custom threat intel feed",
+      "✓ On-prem / air-gap deploy (Helm chart, Docker)",
+      "✓ SOC2 Type II · ISO 27001 · GDPR DPA",
+      "✓ Bug bounty program access",
+      "✓ Dedicated CSM · Quarterly business review",
+      "✓ Onboarding, training, runbooks",
     ],
     border: "var(--panel-border)",
     bg: "var(--bg-secondary)",
@@ -109,12 +122,12 @@ export default function PricingPage() {
             marginBottom: 12,
           }}
         >
-          Simple, agent-based pricing
+          Pro = her şey. $5/agent/month.
         </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 15, maxWidth: 500, margin: "0 auto", lineHeight: "24px" }}>
-          1 agent is always free. No time limit, no credit card. 
-          Add more agents for <strong>$5/agent/month</strong> when your fleet grows. 
-          <strong>$4/agent/month</strong> when billed yearly.
+        <p style={{ color: "var(--text-secondary)", fontSize: 15, maxWidth: 600, margin: "0 auto", lineHeight: "24px" }}>
+          1 agent is always free. No time limit, no credit card.
+          <strong> Pro includes every AIDR Scan engine</strong> — no feature gates, no upsells.
+          <strong>$5/agent/month</strong>, or <strong>$4/agent/month</strong> billed yearly. 14-day free trial.
         </p>
       </div>
 

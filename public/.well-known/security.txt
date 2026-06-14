@@ -1,0 +1,29 @@
+Contact: mailto:security@singularityrd.com
+Expires: 2027-12-31T23:59:59z
+Preferred-Languages: en, tr
+Canonical: https://aidr.dev/.well-known/security.txt
+Policy: https://aidr.dev/trust#responsible-disclosure
+Acknowledgments: https://aidr.dev/trust#hall-of-fame
+Encryption: https://aidr.dev/.well-known/pgp-key.asc
+Hiring: https://aidr.dev/careers
+
+# Singularity AIDR — Responsible Disclosure Policy
+#
+# We commit to:
+#  - Acknowledge receipt within 3 business days
+#  - Triage within 10 business days
+#  - Coordinate disclosure timeline (90 days default)
+#  - Credit researchers in our Hall of Fame (with permission)
+#  - Pay bounty awards for valid critical/high findings
+#
+# Scope:
+#  - aidr.dev, app.aidr.dev, api.aidr.dev
+#  - AIDR CLI binary (aidr.dev/install.sh)
+#  - AIDR Scan Docker images (ghcr.io/singularityrd/aidr-scan)
+#  - AIDR SDK packages (@aidr/sdk, aidr-sdk, github.com/singularityrd/aidr-sdk)
+#
+# Out of scope:
+#  - Vulnerabilities in third-party dependencies (please report upstream)
+#  - Denial-of-service attacks
+#  - Social engineering of SingularityRD staff
+#  - Physical security
