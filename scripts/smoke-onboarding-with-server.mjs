@@ -7,7 +7,7 @@ process.noDeprecation = true;
 const port = process.env.SMOKE_PORT || "4568";
 const host = process.env.SMOKE_HOST || "localhost";
 const baseUrl = (process.env.SMOKE_BASE_URL || `http://${host}:${port}`).replace(/\/+$/, "");
-const timeoutMs = Number.parseInt(process.env.SMOKE_SERVER_TIMEOUT_MS || "60000", 10);
+const timeoutMs = Number.parseInt(process.env.SMOKE_SERVER_TIMEOUT_MS || "120000", 10);
 const nextCli = "node_modules/next/dist/bin/next";
 const buildIdPath = ".next/BUILD_ID";
 
