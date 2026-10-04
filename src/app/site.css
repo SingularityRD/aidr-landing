@@ -224,13 +224,20 @@ main:focus {
 .doc-section ul,
 .doc-section ol {
   margin: 8px 0 8px 22px;
+  list-style: revert;
+  padding-left: 4px;
+}
+
+.doc-section ul.doc-grid {
+  list-style: none;
+  padding-left: 0;
 }
 
 .doc-section li + li {
   margin-top: 4px;
 }
 
-.doc-section a,
+.doc-section a:not(.btn),
 .doc-main a.text-link {
   color: var(--text-primary);
   text-decoration: underline;
@@ -476,6 +483,10 @@ main:focus {
   border-radius: 14px;
   background: var(--bg-secondary);
   box-shadow: 0 12px 36px var(--shadow-color);
+}
+
+.consent-banner .btn {
+  padding: 8px 14px;
 }
 
 .consent-banner p {

@@ -110,6 +110,39 @@ Internal scheduler:
   evidence, and signs the payload with `AIDR_EXPORT_WEBHOOK_SECRET` when
   configured.
 
+
+## Public Website and Procurement Pages
+
+The public pages (`/`, `/pricing`, `/pilot`, `/enterprise`, `/install`, `/security`, `/trust`,
+`/privacy`, `/terms`, `/dpa`, `/support`, `/status`, `/contact`, `/compare`) are written against the
+product evidence in the `aidr` repository. Rules for editing them:
+
+- Product facts (rule count, evaluation terms, connector scope and limits) live in
+  `src/lib/site/claims.ts`. Assurance status lives in `src/lib/site/trust.ts`, enterprise capability
+  labels in `src/lib/site/enterprise.ts`, and subprocessors in `src/lib/site/subprocessors.ts`.
+- `src/lib/site/__tests__/claims-guard.test.ts` fails the build if blocked claims appear (for example
+  "launch-ready", "go live in minutes", "SOC 2 certified", public prices, "free forever"). When the
+  sibling `aidr` checkout is present it also enforces that repository's
+  `commercial-go-evidence-registry.json` claim patterns (override the path with `AIDR_CLAIM_REGISTRY`).
+- `src/lib/site/__tests__/links.test.ts` checks every internal link and fragment and the sitemap.
+- **Legal drafts:** `/privacy`, `/terms` and `/dpa` are not counsel-approved. They show a
+  "Draft pending legal review" banner controlled by the single constant `LEGAL_DRAFT_PENDING_REVIEW`
+  in `src/lib/site/config.ts`. Replace the page text, set `LEGAL_EFFECTIVE_DATE`, and flip the constant
+  to remove the banner and the "TBD" label everywhere.
+- **security.txt** is served at `/.well-known/security.txt`. Re-issue `SECURITY_TXT_EXPIRES` in
+  `src/lib/site/config.ts` before it lapses (a test fails once it has).
+- **Contact form** posts to `/api/contact`, which validates input, checks origin, rate limits, uses a
+  honeypot and timing trap, and forwards to `CONTACT_WEBHOOK_URL`. With no destination it returns 503
+  and the UI says the message was not sent. See `.env.example`.
+- **Health:** `GET /api/health` (liveness) and `GET /api/ready` (real Firestore and Clerk checks,
+  503 when a required dependency fails) return `no-store` JSON. `/status` renders the same checks.
+- **Privacy:** no analytics or advertising trackers. Browser Sentry starts only after a visitor opts in
+  (`src/lib/diagnostics.ts`); session replay is not used.
+- **Headers:** CSP, HSTS (production), frame-ancestors, referrer and permissions policies are set in
+  `next.config.ts`. The CSP derives the Clerk frontend host from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
+  so that variable must be set at **build** time.
+- **Smoke test:** `pnpm smoke:onboarding:ci` builds its own demo bundle in `.next-smoke`, because the
+  client reads the demo flag at build time. It never touches the production `.next` build.
 ## Production
 
 This app is the only public site. The local dashboard is not deployed.
