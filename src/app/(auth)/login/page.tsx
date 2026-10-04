@@ -24,7 +24,9 @@ export default function LoginPage() {
   }
 
   return (
-    <SignIn
+    <>
+      <h1 className="sr-only">Sign in to Singularity AIDR</h1>
+      <SignIn
       routing="path"
       path="/login"
       signUpUrl="/signup"
@@ -68,5 +70,6 @@ export default function LoginPage() {
         },
       }}
     />
+    </>
   );
 }

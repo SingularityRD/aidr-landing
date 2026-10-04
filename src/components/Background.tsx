@@ -26,7 +26,7 @@ export default function Background() {
   }, []);
 
   return (
-    <>
+    <div aria-hidden="true">
       <div
         style={{
           position: "fixed",
@@ -85,6 +85,6 @@ export default function Background() {
           transition: "background 0.3s ease",
         }}
       />
-    </>
+    </div>
   );
 }

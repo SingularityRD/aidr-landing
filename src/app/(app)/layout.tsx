@@ -21,6 +21,8 @@ export default async function AppLayout({
       <Header />
 
       <main
+        id="main"
+        tabIndex={-1}
         style={{
           position: "relative",
           zIndex: 1,
