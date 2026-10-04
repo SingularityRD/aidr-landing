@@ -45,3 +45,18 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# local run artifacts (never commit)
+.dev*.log
+.smoke-*.log
+.smoke-*.ps.log
+*.log
+dev-smoke.*
+local-demo.*
+dashboard.log
+server.log
+clerk.lock
+/.playwright-cli/
+.playwright-mcp/
+/.open-next/
+/.wrangler/
