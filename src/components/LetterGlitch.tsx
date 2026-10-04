@@ -34,6 +34,8 @@ const LetterGlitch = ({
   const grid = useRef({ columns: 0, rows: 0 });
   const context = useRef<CanvasRenderingContext2D | null>(null);
   const frameCount = useRef<number>(0);
+  // Set once the component unmounts so late timers/animation frames become no-ops.
+  const disposed = useRef(false);
 
   const lettersAndSymbols = Array.from(characters);
 
@@ -124,10 +126,11 @@ const LetterGlitch = ({
   };
 
   const drawLetters = () => {
-    if (!context.current || letters.current.length === 0) return;
+    const canvas = canvasRef.current;
+    if (disposed.current || !canvas || !context.current || letters.current.length === 0) return;
 
     const ctx = context.current;
-    const { width, height } = canvasRef.current!.getBoundingClientRect();
+    const { width, height } = canvas.getBoundingClientRect();
 
     ctx.clearRect(0, 0, width, height);
     ctx.font = `${fontSize}px monospace`;
@@ -191,6 +194,8 @@ const LetterGlitch = ({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const animate = () => {
+    // The canvas is gone after unmount; stop the loop instead of drawing into null.
+    if (disposed.current || !canvasRef.current) return;
     frameCount.current += 1;
     const frameStep = Math.max(1, Math.round(glitchSpeed / 16));
 
@@ -210,25 +215,34 @@ const LetterGlitch = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    disposed.current = false;
     context.current = canvas.getContext("2d");
     resizeCanvas();
-    animate();
 
-    let resizeTimeout: ReturnType<typeof setTimeout>;
+    // Decorative animation: render a single static frame for users who prefer reduced motion.
+    const reduceMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!reduceMotion) animate();
+
+    let resizeTimeout: ReturnType<typeof setTimeout> | undefined;
 
     const handleResize = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        cancelAnimationFrame(animationRef.current as number);
+        if (disposed.current) return;
+        if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
         resizeCanvas();
-        animate();
+        if (!reduceMotion) animate();
       }, 100);
     };
 
     window.addEventListener("resize", handleResize);
 
     return () => {
-      cancelAnimationFrame(animationRef.current!);
+      disposed.current = true;
+      clearTimeout(resizeTimeout);
+      if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
       window.removeEventListener("resize", handleResize);
     };
   }, [animate, resizeCanvas]);
