@@ -1,6 +1,6 @@
 import { createHash, createHmac } from "node:crypto";
 import { buildRuntimePolicyAsCode, normalizeRuntimePolicySettings } from "../policy-settings";
-import { verifyAgentAccessToken } from "./agent-token";
+import { authenticateAgent, ControlPlaneError } from "./agent-auth";
 
 type FirestoreSnapshot = {
   exists: boolean;
@@ -17,13 +17,6 @@ export type RuntimePolicyDb = {
   };
 };
 
-function getBearerToken(headerValue: string | null) {
-  if (!headerValue) return null;
-  const value = headerValue.trim();
-  if (!value.toLowerCase().startsWith("bearer ")) return null;
-  return value.slice("bearer ".length).trim() || null;
-}
-
 function getString(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;
 }
@@ -37,6 +30,27 @@ function stableStringify(value: unknown): string {
 
 export function runtimePolicyHash(value: unknown) {
   return `sha256=${createHash("sha256").update(stableStringify(value), "utf8").digest("hex")}`;
+}
+
+/**
+ * Canonical JSON used for `policy_sha256`. This MUST match `canonicalPolicy` in
+ * aidr `packages/core/src/remote-policy.ts` (and `supabase/functions/_shared/runtime-policy.ts`):
+ * keys sorted by UTF-16 code unit order (NOT localeCompare), no whitespace.
+ */
+export function canonicalRuntimePolicy(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalRuntimePolicy).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([key, item]) => `${JSON.stringify(key)}:${canonicalRuntimePolicy(item)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+}
+
+/** Hex SHA-256 digest of the canonical runtime policy; the connector recomputes and compares it. */
+export function runtimePolicySha256(runtimePolicy: unknown): string {
+  return createHash("sha256").update(canonicalRuntimePolicy(runtimePolicy), "utf8").digest("hex");
 }
 
 export function signRuntimePolicyVersion(input: {
@@ -56,21 +70,32 @@ export async function getAgentRuntimePolicy(input: {
   db: RuntimePolicyDb;
   now?: Date;
 }) {
-  const token = getBearerToken(input.authorizationHeader);
-  if (!token) throw new Error("missing_agent_token");
-
-  const claims = verifyAgentAccessToken(token, input.now);
-  const snap = await input.db.collection(`users/${claims.uid}/settings`).doc("current").get();
+  // Tenant = token claim. A revoked/deleted/paused agent is refused before any
+  // tenant data is read.
+  const { uid, agentId } = await authenticateAgent({
+    authorizationHeader: input.authorizationHeader,
+    db: input.db,
+    now: input.now,
+  });
+  const snap = await input.db.collection(`users/${uid}/settings`).doc("current").get();
   const data = snap.exists ? (snap.data() ?? {}) : {};
+  // An unpublished tenant has NO central policy. Serving the dashboard defaults
+  // (ask for every command/file/url) would block every enrolled agent pending
+  // approval, so report "not published" and let the connector keep local policy.
+  if (!data.runtime_policy || typeof data.runtime_policy !== "object") {
+    throw new ControlPlaneError("policy_not_published", 404);
+  }
   const policy = normalizeRuntimePolicySettings(data.runtime_policy);
   const policyAsCode = buildRuntimePolicyAsCode(policy);
-  const policyVersion = getString(data.updated_at, "default");
+  // Same precedence as the dashboard drift view (`currentPolicyVersionFromSettings`).
+  const policyVersion = getString(data.runtime_policy_version) || getString(data.updated_at) || "default";
   const policyHash = runtimePolicyHash(policyAsCode);
 
   return {
     ok: true,
-    agent_id: claims.agent_id,
+    agent_id: agentId,
     policy_version: policyVersion,
+    policy_sha256: runtimePolicySha256(policy),
     policy_hash: policyHash,
     policy_signature: signRuntimePolicyVersion({
       policyVersion,

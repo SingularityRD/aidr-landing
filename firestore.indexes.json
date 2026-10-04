@@ -59,5 +59,14 @@
         { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "enrollment_tokens",
+      "fieldPath": "token_hash",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    }
   ]
 }

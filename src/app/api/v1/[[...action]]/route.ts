@@ -3,21 +3,15 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { adminDb, firebaseAdminEnvError } from "@/lib/firebase/admin";
-import {
-  devicePollByDeviceCode,
-  deviceStart,
-  deviceVerifyUserCode,
-  enrollWithEnrollmentToken,
-} from "@/lib/control-plane/device-auth";
+import { deviceDenyUserCode, deviceVerifyUserCode } from "@/lib/control-plane/device-auth";
+import { CONNECTOR_ACTIONS } from "@/lib/control-plane/agent-api";
 import {
   consumeInstallCode,
   createInstallCode,
   generateInstallCode,
   isInstallCodeValid,
 } from "@/lib/control-plane/install-code";
-import { ingestFromRequest } from "@/lib/control-plane/ingest";
 import { exportSecurityEvents } from "@/lib/control-plane/event-export";
-import { getAgentRuntimePolicy } from "@/lib/control-plane/policy";
 import {
   acknowledgePolicyDrift,
   normalizePolicyDriftAction,
@@ -218,28 +212,6 @@ async function recomputeSeatUsage(uid: string) {
 }
 
 // ── Device auth (unchanged core) ────────────────────────────────────────────
-/**
- * Validate that the device-start origin matches allowed app origins.
- * Prevents attackers from generating verification URLs pointing to phishing domains.
- */
-function isAllowedDeviceOrigin(origin: string): boolean {
-  const configured = normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL);
-  if (configured && origin.toLowerCase() === configured.toLowerCase()) return true;
-  // Allow localhost for development
-  if (process.env.NODE_ENV !== "production" && origin.startsWith("http://localhost")) return true;
-  return false;
-}
-
-async function handleDeviceStart(request: NextRequest, body: Record<string, unknown>) {
-  const origin = normalizeOrigin(getString(body.origin)) ?? new URL(request.url).origin;
-  if (!isAllowedDeviceOrigin(origin)) {
-    logger.warn({ origin }, "Rejected device-start with disallowed origin");
-    throw new Error("Invalid origin");
-  }
-  const meta = (body.meta ?? {}) as Record<string, unknown>;
-  return deviceStart({ origin, meta: { ...meta, ip: getRequestIp(request), user_agent: getRequestUserAgent(request.headers) } });
-}
-
 async function handleDeviceVerify(uid: string, body: Record<string, unknown>) {
   return deviceVerifyUserCode({
     uid,
@@ -250,41 +222,6 @@ async function handleDeviceVerify(uid: string, body: Record<string, unknown>) {
       await ensureSeatUsage(uid);
       return readSeatUsage(uid);
     },
-  });
-}
-
-async function handleDevicePoll(request: NextRequest, body: Record<string, unknown>) {
-  return devicePollByDeviceCode(getString(body.device_code), {
-    ip: getRequestIp(request),
-    user_agent: getRequestUserAgent(request.headers),
-  });
-}
-
-async function handleEnroll(request: NextRequest, body: Record<string, unknown>) {
-  const origin = new URL(request.url).origin;
-  const ip = getRequestIp(request);
-  const userAgent = getRequestUserAgent(request.headers);
-  return enrollWithEnrollmentToken({
-    enrollment_token: getString(body.enrollment_token),
-    origin,
-    iid: typeof body.iid === "string" ? body.iid : undefined,
-    agent_runtime: typeof body.agent_runtime === "string" ? body.agent_runtime : undefined,
-    agent_runtime_version: typeof body.agent_runtime_version === "string" ? body.agent_runtime_version : undefined,
-    request_id: typeof body.request_id === "string" ? body.request_id : undefined,
-    ip,
-    user_agent: userAgent,
-  });
-}
-
-async function handleIngest(request: NextRequest, body: Record<string, unknown>) {
-  const ip = getRequestIp(request);
-  const userAgent = getRequestUserAgent(request.headers);
-  return ingestFromRequest({
-    authorizationHeader: request.headers.get("authorization") || request.headers.get("Authorization"),
-    body,
-    requestId: request.headers.get("x-request-id") || request.headers.get("idempotency-key"),
-    ip,
-    userAgent,
   });
 }
 
@@ -457,13 +394,6 @@ function normalizeOrigin(value: string | undefined | null): string | null {
   }
 }
 
-async function handleRuntimePolicy(request: NextRequest) {
-  return getAgentRuntimePolicy({
-    authorizationHeader: request.headers.get("authorization") || request.headers.get("Authorization"),
-    db: adminDb,
-  });
-}
-
 function getPublicAppOrigin(requestOrigin: string): string {
   // Prefer configured public base URL for all user-visible links.
   // Fall back to request origin for non-standard deployments / previews.
@@ -581,11 +511,6 @@ async function dispatchAction(request: NextRequest, action: string, uid: string 
 
   // Public endpoints (no auth required)
   if (action === "waitlist-signup") return handleWaitlistSignup(body, { ip, userAgent });
-  if (action === "device-start") return handleDeviceStart(request, body);
-  if (action === "device-poll") return handleDevicePoll(request, body);
-  if (action === "enroll") return handleEnroll(request, body);
-  if (action === "ingest") return handleIngest(request, body);
-  if (action === "policy") return handleRuntimePolicy(request);
 
   // Auth required endpoints
   if (!uid) throw new Error("Unauthorized");
@@ -596,6 +521,7 @@ async function dispatchAction(request: NextRequest, action: string, uid: string 
     "enrollment-tokens": { limit: 12, windowSeconds: 60 },
     "billing-checkout": { limit: 8, windowSeconds: 60 },
     "device-verify": { limit: 10, windowSeconds: 60 },
+    "device-deny": { limit: 10, windowSeconds: 60 },
     "agent-update": { limit: 20, windowSeconds: 60 },
     "seat-update": { limit: 20, windowSeconds: 60 },
     "install-prompt": { limit: 10, windowSeconds: 60 },
@@ -625,6 +551,8 @@ async function dispatchAction(request: NextRequest, action: string, uid: string 
       return handleEnrollmentTokens(uid, method, body);
     case "billing-checkout":
       return handleBillingCheckout(uid, body);
+    case "device-deny":
+      return deviceDenyUserCode({ uid, user_code: getString(body.user_code) });
     case "device-verify":
       return handleDeviceVerify(uid, { ...body, ip, user_agent: userAgent, request_id: requestId });
     case "agent-update": {
@@ -984,6 +912,17 @@ const isProduction = process.env.NODE_ENV === "production";
 async function handleRequest(request: NextRequest, context: { params: Promise<{ action?: string[] }> }) {
   const params = await context.params;
   const action = params.action?.join("/") ?? "";
+
+  // Connector-facing actions authenticate with their own bearer credential and
+  // share one implementation with /v1/* (see lib/control-plane/agent-api.ts).
+  const connector = CONNECTOR_ACTIONS[action];
+  if (connector) {
+    if (request.method.toUpperCase() !== connector.method) {
+      return json(405, { error: "method_not_allowed" });
+    }
+    return connector.handler(request);
+  }
+
   const uid = await getUserIdFromRequest();
 
   if (firebaseAdminEnvError) {

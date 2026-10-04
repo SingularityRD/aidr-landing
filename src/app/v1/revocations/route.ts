@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { policyHandler } from "@/lib/control-plane/agent-api";
+import { revocationsHandler } from "@/lib/control-plane/agent-api";
 
 export const runtime = "nodejs";
 
 export function GET(request: NextRequest) {
-  return policyHandler(request);
+  return revocationsHandler(request);
 }
