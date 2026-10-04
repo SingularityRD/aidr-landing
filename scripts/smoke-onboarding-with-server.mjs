@@ -9,7 +9,10 @@ const host = process.env.SMOKE_HOST || "localhost";
 const baseUrl = (process.env.SMOKE_BASE_URL || `http://${host}:${port}`).replace(/\/+$/, "");
 const timeoutMs = Number.parseInt(process.env.SMOKE_SERVER_TIMEOUT_MS || "120000", 10);
 const nextCli = "node_modules/next/dist/bin/next";
-const buildIdPath = ".next/BUILD_ID";
+// The demo bundle is built into its own directory: client code reads NEXT_PUBLIC_AIDR_E2E_MODE at
+// build time, so it must never share (or overwrite) the production build in .next.
+const distDir = process.env.SMOKE_DIST_DIR || ".next-smoke";
+const buildIdPath = `${distDir}/BUILD_ID`;
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -61,16 +64,24 @@ const env = {
   AIDR_DEMO_MODE: "1",
   NEXT_PUBLIC_AIDR_E2E_MODE: "1",
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_Y2xlcmsubG9jYWw",
+  NEXT_DIST_DIR: distDir,
   SMOKE_BASE_URL: baseUrl,
 };
+
+function buildDemoBundle() {
+  console.log(`Building demo smoke bundle into ${distDir} ...`);
+  const result = spawnSync(process.execPath, [nextCli, "build"], { env, stdio: "inherit", shell: false });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`demo smoke build failed with exit code ${result.status ?? "unknown"}`);
+}
 
 let server;
 try {
   if (await probe(`${baseUrl}/onboarding`)) {
     console.log(`Reusing existing smoke server at ${baseUrl}`);
   } else {
-    if (!existsSync(buildIdPath)) {
-      throw new Error("Missing .next build output. Run `pnpm build` before `pnpm smoke:onboarding:ci`.");
+    if (process.env.SMOKE_SKIP_BUILD !== "1" || !existsSync(buildIdPath)) {
+      buildDemoBundle();
     }
 
     server = spawn(process.execPath, [nextCli, "start", "-p", port], {

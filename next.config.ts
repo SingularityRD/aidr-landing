@@ -80,6 +80,9 @@ function buildContentSecurityPolicy(): string {
 
 const nextConfig: NextConfig = {
 	allowedDevOrigins: ["127.0.0.1", "localhost"],
+	// The onboarding smoke test builds a demo-flavoured bundle into its own directory so it can
+	// never overwrite (or be mistaken for) the real production build in .next.
+	distDir: process.env.NEXT_DIST_DIR || ".next",
 	poweredByHeader: false,
 	async headers() {
 		const headers = [

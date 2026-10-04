@@ -319,7 +319,8 @@ export const demoPolicyPublishRequests: DemoPolicyPublishRequest[] = [
     policy_signature: "hmac-sha256=demo-policy-signature",
     requested_by: "demo-user-001",
     requested_at: `${base}20:10.000Z`,
-    expires_at: "2026-05-07T11:23:10.000Z",
+    // Relative to load time so the demo request never silently becomes "expired" (a fixed date did).
+    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     reviewer_user_ids: [],
     approvals: [
       {

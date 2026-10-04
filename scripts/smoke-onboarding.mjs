@@ -47,7 +47,7 @@ function snapshotUntilIncludes(needles, label) {
 
 function refFor(snapshot, label) {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = snapshot.match(new RegExp(`button "${escaped}"[^\\n]*\\[ref=(e\\d+)\\]`));
+  const match = snapshot.match(new RegExp(`button "${escaped}"[^\\n]*\\[ref=((?:f\\d+)?e\\d+)\\]`));
   if (!match) throw new Error(`Could not find button ref for: ${label}`);
   return match[1];
 }

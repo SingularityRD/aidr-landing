@@ -13,6 +13,6 @@ export default defineConfig({
 	test: {
 		environment: "node",
 		include: ["src/**/__tests__/**/*.test.{ts,tsx}"],
-		exclude: ["**/node_modules/**", "**/.next/**"],
+		exclude: ["**/node_modules/**", "**/.next/**", "**/.next-smoke/**"],
 	},
 });
