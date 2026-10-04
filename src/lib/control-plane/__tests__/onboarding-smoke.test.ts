@@ -7,6 +7,7 @@ type FakeDocRef = {
   path: string;
   get(): Promise<{ exists: boolean; data(): StoredDoc | undefined }>;
   set(data: StoredDoc, options?: { merge?: boolean }): Promise<void>;
+  update(data: StoredDoc): Promise<void>;
 };
 
 function makeDocSnap(ref: FakeDocRef, data: StoredDoc | undefined) {
@@ -33,6 +34,10 @@ function createFakeDb() {
       async set(data, options) {
         const existing = options?.merge ? (store.get(path) ?? {}) : {};
         store.set(path, { ...existing, ...data });
+      },
+      async update(data) {
+        if (!store.has(path)) throw new Error(`NOT_FOUND: ${path}`);
+        store.set(path, { ...store.get(path), ...data });
       },
     };
   }
@@ -155,6 +160,7 @@ describe("control-plane onboarding smoke", () => {
 
     const authorized = await devicePollByDeviceCode(started.device_code);
     expect(authorized).toEqual({
+      ok: true,
       status: "authorized",
       enrollment_token: expect.stringMatching(/^aidr_enroll_/),
       agent_id: verified.agent_id,
@@ -181,6 +187,7 @@ describe("control-plane onboarding smoke", () => {
       authorizationHeader: `Bearer ${enrolled.access_token}`,
       requestId: "req_onboarding_first_event",
       body: {
+        iid: "iid_onboarding_1",
         events: [
           {
             event_id: "evt_onboarding_first",
@@ -206,7 +213,12 @@ describe("control-plane onboarding smoke", () => {
       userAgent: "vitest",
     });
 
-    expect(ingested).toEqual({ ok: true, accepted: 1 });
+    expect(ingested).toMatchObject({
+      ok: true,
+      accepted: 1,
+      acknowledged_event_ids: ["evt_onboarding_first"],
+      agent_id: verified.agent_id,
+    });
 
     const agent = mocks.db.store.get(`users/user_123/agents/${verified.agent_id}`);
     expect(agent).toMatchObject({

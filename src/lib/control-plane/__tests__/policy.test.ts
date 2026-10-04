@@ -3,9 +3,19 @@ import { mintAgentAccessToken } from "../agent-token";
 import { getAgentRuntimePolicy, type RuntimePolicyDb } from "../policy";
 
 class FakePolicyDb implements RuntimePolicyDb {
-  constructor(private readonly settings: Record<string, unknown> | null) {}
+  constructor(
+    private readonly settings: Record<string, unknown> | null,
+    private readonly agents: Record<string, Record<string, unknown>> = { agent_1: { status: "connected" } },
+  ) {}
 
   collection(path: string) {
+    if (path === "users/user_1/agents") {
+      return {
+        doc: (id: string) => ({
+          get: async () => ({ exists: id in this.agents, data: () => this.agents[id] }),
+        }),
+      };
+    }
     if (path !== "users/user_1/settings") throw new Error(`unexpected_path:${path}`);
     return {
       doc: (id: string) => ({
@@ -37,14 +47,14 @@ describe("agent runtime policy endpoint helper", () => {
         authorizationHeader: null,
         db: new FakePolicyDb(null),
       }),
-    ).rejects.toThrow("missing_agent_token");
+    ).rejects.toThrow("missing_api_key");
 
     await expect(
       getAgentRuntimePolicy({
         authorizationHeader: "Bearer invalid",
         db: new FakePolicyDb(null),
       }),
-    ).rejects.toThrow("invalid_token_format");
+    ).rejects.toThrow("invalid_api_key");
   });
 
   it("returns normalized policy for the token owner only", async () => {
@@ -77,6 +87,7 @@ describe("agent runtime policy endpoint helper", () => {
       ok: true,
       agent_id: "agent_1",
       policy_version: "2026-05-06T10:10:00.000Z",
+      policy_sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
       policy_hash: expect.stringMatching(/^sha256=[a-f0-9]{64}$/),
       policy_signature: expect.stringMatching(/^hmac-sha256=[a-f0-9]{64}$/),
       cache_seconds: 60,
