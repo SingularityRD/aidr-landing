@@ -67,10 +67,9 @@ assertIncludes(copied, "100%", "copied onboarding snapshot");
 
 run(["goto", `${baseUrl}/compare`], { capture: true });
 const compared = run(["snapshot"], { capture: true });
-assertIncludes(compared, "AIDR is the only tool that protects", "compare page");
-assertIncludes(compared, "Competitive Position", "compare page");
-assertIncludes(compared, "Feature Comparison Matrix", "compare page");
-assertIncludes(compared, "Why AIDR Wins", "compare page");
+assertIncludes(compared, "Where AIDR fits among AI security controls", "compare page");
+assertIncludes(compared, "Layers and where AIDR applies", "compare page");
+assertIncludes(compared, "What this page does not claim", "compare page");
 
 run(["goto", `${baseUrl}/settings`], { capture: true });
 const settings = run(["snapshot"], { capture: true });

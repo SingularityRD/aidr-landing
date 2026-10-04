@@ -1,788 +1,290 @@
-"use client";
-
 import Link from "next/link";
-import { useSmartUser } from "../hooks/useSmartUser";
-import Background from "../components/Background";
-import Header from "../components/Header";
-import InstallPromptCard from "../components/InstallPromptCard";
+import type { Metadata } from "next";
+import PageShell from "@/components/site/PageShell";
+import HeroCtas from "@/components/site/HeroCtas";
+import { CONNECTORS, DETECTION_RULES, EVALUATION, PRICING_STATEMENT } from "@/lib/site/claims";
 
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
-// ── Data ──────────────────────────────────────────────────────────────────────
+const pipeline = [
+  { id: "tool-received", label: "Tool call received", detail: "Shell, file, web and MCP calls the host routes through its hook", kind: "input" },
+  { id: "extract-artifacts", label: "Extract artifacts", detail: "Commands, URLs, file paths, package names, content", kind: "step" },
+  { id: "check-allowlist", label: "Allowlist and cache", detail: "Exact-artifact allowlist and recent verdicts", kind: "decision" },
+  { id: "run-heuristics", label: "Run rules", detail: `${DETECTION_RULES.count} YAML threat rules in ${DETECTION_RULES.files} files, plus policy`, kind: "step" },
+  { id: "query-reputation", label: "Optional reputation checks", detail: "URL, file hash and package checks, only when enabled", kind: "step" },
+  { id: "decision-engine", label: "Decision engine", detail: "Merge signals; deny wins over ask, ask wins over allow", kind: "decision" },
+  { id: "verdict", label: "Verdict", detail: "Allow, ask (block pending human approval) or deny", kind: "output" },
+];
 
-const detectionLayers = [
+const layers = [
   {
-    title: "URL Reputation",
-    desc: "Cloud-based lookup for malware, phishing, and scam URLs. Works without an API key — privacy-preserving by design.",
-    icon: "🔍",
+    title: "Local rules",
+    desc: `${DETECTION_RULES.count} data-driven YAML rules match dangerous commands, sensitive file paths, credential exposure, obfuscation and prompt-injection patterns. They run on the developer machine.`,
   },
   {
-    title: "Local Heuristics",
-    desc: "YAML-based regex patterns matching dangerous commands, suspicious URLs, sensitive file paths, credential exposure, and obfuscation techniques.",
-    icon: "⚡",
+    title: "Policy",
+    desc: "Filesystem, network, MCP and tool rules from local configuration or a signed policy published from the dashboard.",
   },
   {
-    title: "Package Supply-Chain",
-    desc: "Registry existence, file reputation, and age analysis for npm/PyPI packages. Catches typosquats, dependency confusion, and malicious updates.",
-    icon: "📦",
+    title: "Package and plugin checks",
+    desc: "Package-install commands are checked against registry metadata, age heuristics and offline intel. Installed plugins are scanned at session start.",
   },
   {
-    title: "Plugin Scanning",
-    desc: "Scans other installed plugins for threats at session start. Detects plugin tampering, suspicious configurations, and command surface exposure.",
-    icon: "🧩",
+    title: "Optional reputation",
+    desc: "URL, file-hash and package reputation lookups when enabled. They need a configured first-party endpoint and an unavailable lookup is never reported as clean.",
   },
 ];
 
 const features = [
-  {
-    title: "Tool-Call Inspection",
-    desc: "Intercepts Bash, WebFetch, Write, Edit, Read, Delete — and MCP/plugin tool calls across all major AI coding platforms.",
-  },
-  {
-    title: "Prompt-First Setup",
-    desc: "Install by prompt, then finish auth in the browser with zero key copying. No CLI magic, no manual config.",
-  },
-  {
-    title: "Device Authorization",
-    desc: "Short-lived codes bootstrap enrollment and unlock managed protection safely. Single-use, user-scoped, time-limited.",
-  },
-  {
-    title: "Incident Correlation",
-    desc: "Repeated denials, suspicious retries, and abuse patterns roll into one case. Full audit trail with redacted secrets.",
-  },
-  {
-    title: "Dashboard Sync",
-    desc: "Every protected agent reports health, incidents, and entitlement state centrally. Real-time visibility into your fleet.",
-  },
-  {
-    title: "Offline Grace",
-    desc: "Enrolled agents keep working when the network drops, within the signed cache window. Never break the agent flow.",
-  },
-  {
-    title: "Output Safety Scanner",
-    desc: "Scans agent outputs for leaked credentials, secrets, and sensitive data before they reach the user. Post-tool-use hook.",
-  },
-  {
-    title: "MCP/Tool Inventory",
-    desc: "Catalogues all MCP servers and tools at session start. Warns on risky discovered servers before they can cause harm.",
-  },
-  {
-    title: "Audit Redaction",
-    desc: "All audit logs automatically redact PII, secrets, and credentials. Compliant logging without manual sanitization.",
-  },
-  {
-    title: "LLM Threat Rules",
-    desc: "Detects prompt injection, system prompt extraction, tool misuse, memory poisoning, and jailbreak attempts.",
-  },
-  {
-    title: "Sensitivity Presets",
-    desc: "Configurable confidence thresholds (low/medium/high). Control when detections escalate from ask to deny.",
-  },
-  {
-    title: "Fail-Open Design",
-    desc: "Every internal error path returns an allow verdict. AIDR never breaks your agent — even when the API is down.",
-  },
+  { title: "Tool-call inspection", desc: "Shell commands, file reads and writes, web fetches and MCP calls, for the tools each host routes through its hook." },
+  { title: "Block pending approval", desc: "A call that needs a human decision is blocked. No approval tool is exposed to the agent, so an injected prompt cannot approve its own block." },
+  { title: "Device authorization", desc: "Enrollment uses short-lived, single-use codes that a signed-in user approves in the browser." },
+  { title: "Incident correlation", desc: "Repeated denials and suspicious retries are grouped into cases with owner, status and evidence." },
+  { title: "Dashboard and policy rollout", desc: "Registered agents, events, incidents, policy publication with optional two-person approval, and drift tracking." },
+  { title: "Signed webhook export", desc: "Send deny and critical events to a webhook you control, with delivery failures tracked and replayable." },
+  { title: "Output inspection", desc: "Tool output can be checked for leaked credentials and injection after the tool runs. This is a post-execution step and cannot undo the action." },
+  { title: "MCP and plugin inventory", desc: "Local MCP server configurations and installed plugins are discovered and checked at session start." },
+  { title: "Credential scrub", desc: "Bearer tokens, API keys and secret URL parameters are removed from events before they leave the machine." },
 ];
 
-const platforms = [
-  {
-    name: "Claude Code",
-    hook: "PreToolUse",
-    tools: "Bash, WebFetch, Write, Edit, Read",
-    install: "/plugin install aidr@aidr",
-  },
-  {
-    name: "Cursor",
-    hook: "beforeShellExecution + preToolUse",
-    tools: "Shell, Write, Edit, Delete, WebFetch, MCP",
-    install: "VSIX extension + enable protection",
-  },
-  {
-    name: "VS Code",
-    hook: "PreToolUse",
-    tools: "Bash, WebFetch, Write, Edit, Read, Delete",
-    install: "VSIX extension from marketplace",
-  },
-  {
-    name: "OpenClaw",
-    hook: "before_tool_call",
-    tools: "exec, web_fetch, write, edit, read, apply_patch",
-    install: "openclaw plugins install @singularityrd/aidr-openclaw",
-  },
-  {
-    name: "OpenCode",
-    hook: "Plugin API",
-    tools: "All tool categories",
-    install: "Add plugin path in opencode config",
-  },
-];
-
-const threatCategories = [
-  { name: "Remote Code Execution", severity: "critical", example: "curl pipe to shell, reverse shells" },
-  { name: "Credential Theft", severity: "critical", example: "SSH keys, .env, AWS credentials" },
-  { name: "Supply Chain Attacks", severity: "high", example: "Typosquat packages, dependency confusion" },
-  { name: "Prompt Injection", severity: "high", example: "Direct/indirect injection, system prompt extraction" },
-  { name: "Data Exfiltration", severity: "high", example: "Unauthorized network calls, file uploads" },
-  { name: "Destructive Operations", severity: "critical", example: "rm -rf, disk wipe, volume delete" },
-  { name: "Persistence Mechanisms", severity: "medium", example: "Cron, systemd, LaunchAgents, shell RC" },
-  { name: "Obfuscation", severity: "medium", example: "Base64, encoded payloads, hidden commands" },
-  { name: "Plugin Tampering", severity: "high", example: "Malicious plugins, modified extensions" },
-  { name: "Privilege Escalation", severity: "critical", example: "sudo abuse, setuid, token theft" },
+const categories = [
+  { name: "Remote code execution", example: "curl piped to a shell, reverse shells" },
+  { name: "Credential theft", example: "SSH keys, .env files, cloud credentials" },
+  { name: "Supply-chain attacks", example: "Typosquatted packages, dependency confusion" },
+  { name: "Prompt injection", example: "Direct and indirect injection, system prompt extraction" },
+  { name: "Data exfiltration", example: "Unexpected network calls and uploads" },
+  { name: "Destructive operations", example: "Recursive deletes, disk wipes" },
+  { name: "Persistence", example: "Cron, systemd, launch agents, shell startup files" },
+  { name: "Obfuscation", example: "Encoded payloads and hidden commands" },
+  { name: "Plugin tampering", example: "Malicious or modified plugins and extensions" },
+  { name: "Privilege escalation", example: "sudo abuse, setuid, token theft" },
 ];
 
 const faqs = [
   {
     q: "What is AIDR?",
-    a: "Singularity AIDR (AI Agent Detection & Response) is a lightweight security layer that intercepts tool calls made by AI coding agents — like Bash commands, file writes, and web requests — and checks them against multiple threat detection layers before they execute.",
+    a: "Singularity AIDR (AI Agent Detection & Response) checks the tool calls AI coding agents make, such as shell commands, file operations and web requests, against rules and policy before they run, and blocks or flags risky ones.",
   },
   {
-    q: "Does AIDR require cloud connectivity?",
-    a: "No. Detection runs locally via YAML-based heuristics. Cloud-based URL reputation is optional and privacy-preserving — no API key needed. Agents with offline grace continue working within a signed cache window even when disconnected.",
+    q: "Does it need a cloud account?",
+    a: "No. Detection and policy run locally and a fresh install enforces without an account. The managed dashboard is an optional layer for fleets. Optional reputation lookups, version checks and managed telemetry are separate outbound paths that can be turned off.",
   },
   {
-    q: "What platforms does AIDR support?",
-    a: "Claude Code, Cursor, VS Code, OpenClaw, and OpenCode. Each platform gets native hooks that intercept tool calls at the appropriate integration point.",
+    q: "Which agents does it support?",
+    a: "The intended first-release scope is Claude Code, Cursor, VS Code, OpenClaw and OpenCode. Each connector has documented limits, and real-host acceptance is not yet complete for any of them. See the install page.",
   },
   {
-    q: "Is AIDR free?",
-    a: "1 agent is always free. Additional agents are $5/agent/month (Pro plan), or $4/agent/month billed yearly. Enterprise plans include org-wide policy distribution, audit exports, and dedicated support.",
+    q: "Can an agent get around it?",
+    a: "Yes, in some cases. AIDR only sees actions that pass through the host's hook. A disabled hook, a separate terminal, or direct network access that never becomes a tool call is not seen. The install page lists the known limits for each connector.",
   },
   {
-    q: "How is my data handled?",
-    a: "AIDR is privacy-first. Threat rules are data-driven YAML files — no hardcoded patterns. Audit logs automatically redact PII and secrets. The URL reputation API is anonymous and requires no API key. No code, file contents, or prompts are sent to external services.",
+    q: "Can it break my agent?",
+    a: "A failing detection signal is skipped and logged. Connector entry points return a block on an internal error rather than silently allowing the call, so a fault can stop an agent action. Blocks pending approval stay blocked until an operator approves them.",
   },
   {
-    q: "Can AIDR break my agent?",
-    a: "AIDR is designed to never break the agent. Every internal error path returns an allow verdict. If the URL reputation API is down, it falls back to heuristics only. Extensions always exit with code 0, and the host decides whether to block based on the JSON response.",
+    q: "How is data handled?",
+    a: "Detection runs on the device and does not upload source files or full prompts. Optional features send specific data, such as URLs, package names or file hashes, and managed telemetry defaults to hashes. The privacy page is a draft pending legal review and lists each path.",
   },
   {
-    q: "How do I install AIDR?",
-    a: "Install with a single prompt in your AI coding tool. For Claude Code: /plugin install aidr@aidr. On first run, you'll see a verification code and URL — sign in, approve the device, and you're protected.",
+    q: "What does it cost?",
+    a: `${EVALUATION.sentence} ${PRICING_STATEMENT}`,
   },
   {
-    q: "What payment methods do you accept?",
-    a: "We use Polar as our payment provider, which supports global payments including credit/debit cards, Apple Pay, and Google Pay. All transactions are processed securely — we never store your payment details.",
+    q: "Is it certified?",
+    a: "No. There is no SOC 2 report, ISO 27001 certificate or independent penetration test yet. The trust center lists what is open.",
   },
 ];
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-
-const sectionBox: React.CSSProperties = {
-  width: "100%",
-  marginBottom: 32,
-  border: "1px solid var(--panel-border)",
-  background: "var(--panel-bg)",
-  borderRadius: 16,
-  padding: "28px 32px",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+const kindColor: Record<string, string> = {
+  input: "#1d4ed8",
+  step: "#6d28d9",
+  decision: "#b45309",
+  output: "#15803d",
 };
-
-const sectionLabel: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 500,
-  color: "var(--text-faint)",
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-  marginBottom: 18,
-};
-
-const gridCard: React.CSSProperties = {
-  border: "1px solid var(--panel-border)",
-  background: "var(--bg-secondary)",
-  borderRadius: 14,
-  padding: 20,
-  transition: "border-color 0.25s ease, box-shadow 0.25s ease",
-};
-
-const btnPrimary: React.CSSProperties = {
-  padding: "10px 20px",
-  borderRadius: 10,
-  border: "1px solid var(--text-primary)",
-  background: "var(--text-primary)",
-  color: "var(--bg-primary)",
-  textDecoration: "none",
-  fontWeight: 500,
-  fontSize: 14,
-};
-
-const btnSecondary: React.CSSProperties = {
-  padding: "10px 20px",
-  borderRadius: 10,
-  border: "1px solid var(--panel-border)",
-  color: "var(--text-secondary)",
-  textDecoration: "none",
-  fontSize: 14,
-};
-
-// ── Components ────────────────────────────────────────────────────────────────
-
-function Section({ id, children, style }: { id?: string; children: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <section id={id} style={{ ...sectionBox, ...style }}>
-      {children}
-    </section>
-  );
-}
-
-function Badge({ children, color = "var(--text-faint)" }: { children: React.ReactNode; color?: string }) {
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: 4,
-        fontSize: 11,
-        fontWeight: 600,
-        background: `${color}18`,
-        color,
-        marginRight: 4,
-        marginBottom: 4,
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const { isSignedIn, isLoaded } = useSmartUser();
-
   return (
-    <div className="relative w-full min-h-screen">
-      <style jsx global>{`
-        @media (max-width: 1100px) {
-          .hero-row { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 900px) {
-          .features-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .layers-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .platforms-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (max-width: 640px) {
-          .features-grid { grid-template-columns: 1fr !important; }
-          .layers-grid { grid-template-columns: 1fr !important; }
-          .platforms-grid { grid-template-columns: 1fr !important; }
-          .page-main { padding: 16px 16px 60px !important; }
-        }
-        .detection-flow {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          align-items: center;
-        }
-        .detection-flow .arrow {
-          color: var(--text-faint);
-          font-size: 18px;
-        }
-        .severity-critical { color: #ef4444; }
-        .severity-high { color: #f59e0b; }
-        .severity-medium { color: #3b82f6; }
-      `}</style>
+    <PageShell className="home-main page-main">
+      <section className="hero-row" aria-labelledby="hero-heading" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "center" }}>
+        <div className="doc-section" style={{ marginTop: 0, padding: "36px 32px" }}>
+          <p className="doc-eyebrow">AI Agent Detection &amp; Response</p>
+          <h1 id="hero-heading" className="doc-title">
+            A detection layer for the tool calls your AI coding agents make.
+          </h1>
+          <p className="doc-lead">
+            Singularity AIDR checks shell commands, file operations, web requests and MCP calls against {DETECTION_RULES.count}{" "}
+            rules and your policy, and blocks or flags risky ones. Detection runs on the developer machine. It is offered
+            today as a {EVALUATION.label}.
+          </p>
+          <HeroCtas secondaryHref="/install" secondaryLabel="See coverage and limits" />
+        </div>
 
-      <Background />
-      <Header />
-
-      <main
-        className="page-main"
-        style={{
-          position: "relative",
-          zIndex: 1,
-          padding: "40px 60px 80px",
-          maxWidth: 1320,
-          margin: "0 auto",
-        }}
-      >
-        {/* ════════════════════════════════════════ HERO ════════════════════ */}
-        <section
-          className="hero-row"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 32,
-            alignItems: "center",
-            marginBottom: 40,
-          }}
+        <div
+          className="doc-card"
+          style={{ fontFamily: "var(--font-geist-mono), monospace", fontSize: 12, lineHeight: "20px" }}
+          role="group"
+          aria-label="Detection pipeline"
         >
-          <div
-            style={{
-              border: "1px solid var(--panel-border)",
-              background: "var(--panel-bg)",
-              borderRadius: 16,
-              padding: "36px 32px",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-            }}
-          >
-            <div style={{ ...sectionLabel, marginBottom: 12 }}>
-              Edge-first AI Agent Detection & Response
-            </div>
-            <h1
-              style={{
-                fontSize: "clamp(30px, 3.6vw, 52px)",
-                lineHeight: 1.08,
-                color: "var(--text-primary)",
-                letterSpacing: "-0.025em",
-                marginBottom: 16,
-                fontWeight: 600,
-              }}
-            >
-              Security layer for your AI coding agents.
-            </h1>
-            <p
-              style={{
-                color: "var(--text-secondary)",
-                maxWidth: 520,
-                lineHeight: "26px",
-                fontSize: 15,
-              }}
-            >
-              Singularity AIDR protects every tool call your AI agent makes — 
-              shell commands, file operations, network requests, and MCP actions. 
-              Install by prompt, authorize in browser, and go live in minutes. 
-              <strong style={{ color: "var(--text-primary)" }}> 1 agent free forever.</strong> 
-              Additional agents <strong style={{ color: "var(--text-primary)" }}>$5/agent/month</strong>.
-            </p>
-
-            <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "wrap" }}>
-              {isLoaded && isSignedIn ? (
-                <Link href="/dashboard" style={btnPrimary}>
-                  Go to Dashboard →
-                </Link>
-              ) : (
-                <Link href="/login" style={btnPrimary}>
-                  Get Started Free
-                </Link>
-              )}
-              <a href="#pricing" style={btnSecondary}>
-                View Pricing
-              </a>
-            </div>
-          </div>
-
-          <div
-            style={{
-              border: "1px solid var(--panel-border)",
-              background: "var(--bg-secondary)",
-              borderRadius: 16,
-              padding: 24,
-              fontFamily: "var(--font-geist-mono), monospace",
-              fontSize: 12,
-              lineHeight: "20px",
-              minHeight: 360,
-            }}
-          >
-            <div style={{ color: "var(--text-faint)", marginBottom: 12, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Detection Pipeline
-            </div>
-
-            {[
-              { id: "tool-received", label: "Tool Call Received", detail: 'Bash | Write | WebFetch | Read | Edit', status: "input" },
-              { id: "extract-artifacts", label: "Extract Artifacts", detail: "URLs · Commands · File paths · Content", status: "processing" },
-              { id: "check-allowlist", label: "Check Allowlist", detail: "Cache hit → allow | Miss → continue", status: "decision" },
-              { id: "run-heuristics", label: "Run Heuristics", detail: "YAML threat patterns · 330+ rules", status: "processing" },
-              { id: "query-reputation", label: "Query Reputation", detail: "URL · Package · Domain checks", status: "processing" },
-              { id: "decision-engine", label: "Decision Engine", detail: "Combine signals → final verdict", status: "decision" },
-              { id: "verdict", label: "Verdict", detail: "✅ Allow  |  ⚠️ Ask  |  🛑 Deny", status: "output" },
-            ].map((step) => (
-              <div key={step.id} style={{ marginBottom: 6 }}>
+          <p className="doc-eyebrow">Detection pipeline</p>
+          <ol style={{ listStyle: "none" }}>
+            {pipeline.map((step) => (
+              <li key={step.id} style={{ marginBottom: 8 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: step.status === "input" ? "#3b82f6" : step.status === "output" ? "#22c55e" : step.status === "decision" ? "#f59e0b" : "#8b5cf6",
-                    flexShrink: 0,
-                  }} />
+                  <span
+                    aria-hidden="true"
+                    style={{ width: 8, height: 8, borderRadius: "50%", background: kindColor[step.kind], flexShrink: 0 }}
+                  />
                   <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{step.label}</span>
                 </div>
-                <div style={{ color: "var(--text-faint)", marginLeft: 14, fontSize: 11 }}>{step.detail}</div>
-              </div>
+                <div style={{ color: "var(--text-secondary)", marginLeft: 16, fontSize: 12 }}>{step.detail}</div>
+              </li>
             ))}
-          </div>
-        </section>
+          </ol>
+        </div>
+      </section>
 
-        {/* ════════════════════════════════════════ DETECTION LAYERS ════════ */}
-        <Section id="how-it-works">
-          <div style={sectionLabel}>How It Works</div>
-          <h2
-            style={{
-              fontSize: 22,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              marginBottom: 20,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Four detection layers, one verdict
-          </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: "22px", marginBottom: 24, maxWidth: 700 }}>
-            Every tool call passes through multiple independent detection layers. 
-            Each layer returns a signal — allow, ask, or deny — and the decision engine 
-            merges them with deny &gt; ask &gt; allow precedence.
-          </p>
+      <div className="callout callout-info" role="note" style={{ marginTop: 24 }}>
+        <strong>Where this stands.</strong> AIDR is in controlled evaluation. Real-host acceptance is not complete for any
+        connector, there is no independent security assessment or certification yet, and there is no SLA. The{" "}
+        <Link href="/trust">trust center</Link> lists what is verified and what is open.
+      </div>
 
-          <div
-            className="layers-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 14,
-            }}
-          >
-            {detectionLayers.map((layer) => (
-              <div key={layer.title} style={gridCard}>
-                <div style={{ fontSize: 24, marginBottom: 8 }}>{layer.icon}</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
-                  {layer.title}
-                </div>
-                <div style={{ fontSize: 13, lineHeight: "20px", color: "var(--text-secondary)" }}>
-                  {layer.desc}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
+      <section id="how-it-works" className="doc-section" aria-labelledby="how-heading">
+        <p className="doc-eyebrow">How it works</p>
+        <h2 id="how-heading">Four signals, one verdict</h2>
+        <p>
+          Each tool call passes through independent checks. They return allow, ask or deny, and the decision engine merges
+          them with deny over ask over allow.
+        </p>
+        <div className="doc-grid">
+          {layers.map((layer) => (
+            <article key={layer.title} className="doc-card">
+              <h3>{layer.title}</h3>
+              <p>{layer.desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
-        {/* ════════════════════════════════════════ FEATURES ════════════════ */}
-        <Section id="features">
-          <div style={sectionLabel}>Core Features</div>
-          <h2
-            style={{
-              fontSize: 22,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              marginBottom: 20,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Everything you need to secure AI agent operations
-          </h2>
+      <section id="features" className="doc-section" aria-labelledby="features-heading">
+        <p className="doc-eyebrow">Capabilities</p>
+        <h2 id="features-heading">What the product does</h2>
+        <div className="doc-grid">
+          {features.map((feature) => (
+            <article key={feature.title} className="doc-card">
+              <h3>{feature.title}</h3>
+              <p>{feature.desc}</p>
+            </article>
+          ))}
+        </div>
+        <p style={{ marginTop: 14 }}>
+          Enterprise options such as SSO, SCIM, SIEM export, audit export and self-hosting are labelled as implemented,
+          partial or roadmap on the <Link href="/enterprise">enterprise page</Link>.
+        </p>
+      </section>
 
-          <div
-            className="features-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 14,
-            }}
-          >
-            {features.map((f) => (
-              <article key={f.title} style={gridCard}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8, letterSpacing: "-0.02em" }}>
-                  {f.title}
-                </div>
-                <div style={{ fontSize: 14, lineHeight: "22px", color: "var(--text-secondary)" }}>
-                  {f.desc}
-                </div>
-              </article>
-            ))}
-          </div>
-        </Section>
+      <section id="threats" className="doc-section" aria-labelledby="threats-heading">
+        <p className="doc-eyebrow">Rule coverage</p>
+        <h2 id="threats-heading">
+          {DETECTION_RULES.count} rules in {DETECTION_RULES.files} YAML files
+        </h2>
+        <p>
+          All detection logic is data: rules are YAML files that can be reviewed and updated independently of the code.
+          A rule count is not an effectiveness measure; independent false-positive and evasion measurements are still
+          open.
+        </p>
+        <ul className="doc-grid" style={{ listStyle: "none", marginLeft: 0 }}>
+          {categories.map((category) => (
+            <li key={category.name} className="doc-card" style={{ padding: "12px 16px" }}>
+              <strong style={{ color: "var(--text-primary)" }}>{category.name}</strong>
+              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{category.example}</div>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-        {/* ════════════════════════════════════════ THREAT COVERAGE ═════════ */}
-        <Section id="threats">
-          <div style={sectionLabel}>Threat Coverage</div>
-          <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6, letterSpacing: "-0.02em" }}>
-            330+ detection rules — data-driven YAML
-          </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 20, maxWidth: 600 }}>
-            All detection logic is data. No hardcoded patterns. Rules are YAML files that ship with the agent and update independently.
-          </p>
+      <section id="platforms" className="doc-section" aria-labelledby="platforms-heading">
+        <p className="doc-eyebrow">Connectors</p>
+        <h2 id="platforms-heading">Five connectors in the intended scope</h2>
+        <p>
+          Each connector uses the integration point its host offers. Targets are Windows, Linux and macOS, but none is yet
+          accepted on real hosts, so none is listed as a supported configuration.
+        </p>
+        <div className="doc-grid">
+          {CONNECTORS.map((connector) => (
+            <article key={connector.id} className="doc-card">
+              <h3>{connector.name}</h3>
+              <p style={{ fontSize: 13 }}>{connector.interception}.</p>
+              <p style={{ fontSize: 13, marginTop: 8 }}>
+                <Link href={`/install#${connector.id}`}>Install steps and limits</Link>
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
-            {threatCategories.map((t) => (
-              <div
-                key={t.name}
-                style={{
-                  ...gridCard,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "14px 18px",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{t.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-faint)", marginTop: 2 }}>{t.example}</div>
-                </div>
-                <Badge color={t.severity === "critical" ? "#ef4444" : t.severity === "high" ? "#f59e0b" : "#3b82f6"}>
-                  {t.severity}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/* ════════════════════════════════════════ PLATFORMS ═══════════════ */}
-        <Section id="platforms">
-          <div style={sectionLabel}>Supported Platforms</div>
-          <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6, letterSpacing: "-0.02em" }}>
-            Works with every major AI coding tool
-          </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 20, maxWidth: 600 }}>
-            Native hooks for each platform. No wrappers, no sidecars — just drop-in protection.
-          </p>
-
-          <div
-            className="platforms-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: 14,
-            }}
-          >
-            {platforms.map((p) => (
-              <div key={p.name} style={gridCard}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>
-                  {p.name}
-                </div>
-                <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 11, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Hook</div>
-                  <div style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "var(--font-geist-mono), monospace" }}>{p.hook}</div>
-                </div>
-                <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 11, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Protected Tools</div>
-                  <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{p.tools}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Install</div>
-                  <code style={{ fontSize: 11, color: "var(--text-code)", wordBreak: "break-all" }}>{p.install}</code>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/* ════════════════════════════════════════ SECURITY & PRIVACY ══════ */}
-        <Section id="security">
-          <div style={sectionLabel}>Security & Privacy</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14, marginTop: 4 }}>
-            {[
-              { title: "Privacy-First Design", desc: "No code, file contents, or prompts are sent to external services. Threat rules run locally. URL reputation is anonymous — no API key needed." },
-              { title: "Fail-Open Architecture", desc: "AIDR never breaks your agent. Every internal error returns an allow verdict. If the reputation API is down, AIDR falls back to heuristics." },
-              { title: "Audit with Redaction", desc: "All audit logs automatically redact PII, secrets, API keys, and credentials before storage. Compliant by default." },
-              { title: "Data-Driven Rules", desc: "Every detection is a YAML file — no hardcoded patterns. Rules can be updated, expired, or revoked independently without code changes." },
-              { title: "Offline Grace Period", desc: "Enrolled agents cache verdicts within a signed window. Protection continues even when the network is unavailable." },
-              { title: "Open Source Core", desc: "The core detection engine is MIT-licensed. Inspect what runs on your machine. No black boxes, no telemetry without consent." },
-            ].map((item) => (
-              <div key={item.title} style={gridCard}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>{item.title}</div>
-                <div style={{ fontSize: 13, lineHeight: "20px", color: "var(--text-secondary)" }}>{item.desc}</div>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/* ════════════════════════════════════════ PRICING ═════════════════ */}
-        <Section id="pricing">
-          <div style={sectionLabel}>Pricing</div>
-          <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6, letterSpacing: "-0.02em" }}>
-            Start free. Scale when you need to.
-          </h2>
-          <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 20, maxWidth: 500 }}>
-            1 agent is always free. No time limit, no credit card required. Additional agents are <strong>$5/agent/month</strong> — or <strong>$4/agent/month</strong> billed yearly.
-          </p>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 14,
-            }}
-          >
-            {/* Free */}
-            <div style={gridCard}>
-              <div style={{ fontSize: 12, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-                Free
-              </div>
-              <div style={{ fontSize: 32, fontWeight: 600, color: "var(--text-primary)" }}>
-                $0
-              </div>
-              <div style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 16 }}>
-                1 agent forever
-              </div>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", color: "var(--text-secondary)", fontSize: 13, lineHeight: "26px" }}>
-                <li>✓ Full detection engine</li>
-                <li>✓ Dashboard access</li>
-                <li>✓ Incident management</li>
-                <li>✓ Audit logging</li>
-                <li>✓ Community support</li>
-              </ul>
-            </div>
-
-            {/* Pro */}
-            <div
-              style={{
-                ...gridCard,
-                border: "1px solid var(--accent, #3862e8)",
-                background: "linear-gradient(180deg, rgba(56,98,232,0.06), var(--bg-secondary))",
-                position: "relative",
-              }}
-            >
-              <div style={{ fontSize: 12, color: "var(--accent, #3862e8)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-                Pro
-                <span
-                  style={{
-                    marginLeft: 8,
-                    padding: "2px 6px",
-                    borderRadius: 4,
-                    fontSize: 10,
-                    background: "#3862e8",
-                    color: "white",
-                    fontWeight: 600,
-                  }}
-                >
-                  Recommended
-                </span>
-              </div>
-              <div style={{ fontSize: 32, fontWeight: 600, color: "var(--text-primary)" }}>
-                $5
-                <span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-secondary)" }}>/agent/month</span>
-              </div>
-              <div style={{ fontSize: 13, color: "var(--text-faint)", marginTop: 2, marginBottom: 16 }}>
-                $4/agent/month billed yearly
-              </div>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", color: "var(--text-secondary)", fontSize: 13, lineHeight: "26px" }}>
-                <li>✓ Everything in Free</li>
-                <li>✓ Unlimited agents</li>
-                <li>✓ Team management</li>
-                <li>✓ Priority support</li>
-                <li>✓ Seat-based billing</li>
-              </ul>
-            </div>
-
-            {/* Enterprise */}
-            <div style={gridCard}>
-              <div style={{ fontSize: 12, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-                Enterprise
-              </div>
-              <div style={{ fontSize: 32, fontWeight: 600, color: "var(--text-primary)" }}>
-                Custom
-              </div>
-              <div style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 16 }}>
-                For organizations
-              </div>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", color: "var(--text-secondary)", fontSize: 13, lineHeight: "26px" }}>
-                <li>✓ Everything in Pro</li>
-                <li>✓ Org-wide policy distribution</li>
-                <li>✓ Audit exports & compliance</li>
-                <li>✓ Dedicated SLAs</li>
-                <li>✓ Custom integrations</li>
-              </ul>
-            </div>
-          </div>
-
-          <div
-            style={{
-              marginTop: 18,
-              textAlign: "center" as const,
-            }}
-          >
-            {isLoaded && !isSignedIn ? (
-              <Link href="/login" style={{ ...btnPrimary, display: "inline-block" }}>
-                Get Started — Free Agent
-              </Link>
-            ) : null}
-          </div>
-        </Section>
-
-        {/* ════════════════════════════════════════ FAQ ═════════════════════ */}
-        <Section id="faq">
-          <div style={sectionLabel}>FAQ</div>
-          <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 20, letterSpacing: "-0.02em" }}>
-            Frequently asked questions
-          </h2>
-
-          <div style={{ display: "grid", gap: 10 }}>
-            {faqs.map((faq) => (
-              <details
-                key={faq.q}
-                style={{
-                  border: "1px solid var(--panel-border)",
-                  borderRadius: 12,
-                  padding: "16px 20px",
-                  background: "var(--bg-secondary)",
-                  cursor: "pointer",
-                }}
-              >
-                <summary
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 500,
-                    color: "var(--text-primary)",
-                    outline: "none",
-                  }}
-                >
-                  {faq.q}
-                </summary>
-                <div
-                  style={{
-                    marginTop: 12,
-                    fontSize: 14,
-                    lineHeight: "22px",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  {faq.a}
-                </div>
-              </details>
-            ))}
-          </div>
-        </Section>
-
-        {/* ════════════════════════════════════════ CTA ════════════════════ */}
-        <Section>
-          <div style={{ textAlign: "center" as const, padding: "20px 0" }}>
-            <h2
-              style={{
-                fontSize: 24,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                marginBottom: 10,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Ready to secure your AI agents?
-            </h2>
-            <p
-              style={{
-                color: "var(--text-secondary)",
-                fontSize: 15,
-                marginBottom: 20,
-                maxWidth: 480,
-                margin: "0 auto 20px",
-              }}
-            >
-              Install in one command. Protect your first agent free. No credit card needed.
+      <section id="security" className="doc-section" aria-labelledby="security-heading">
+        <p className="doc-eyebrow">Security and privacy</p>
+        <h2 id="security-heading">What stays local and what does not</h2>
+        <div className="doc-grid">
+          <article className="doc-card">
+            <h3>Local by default</h3>
+            <p>Rule and policy evaluation run on the device. Local detection does not upload source files or full prompts.</p>
+          </article>
+          <article className="doc-card">
+            <h3>Optional outbound paths</h3>
+            <p>
+              Reputation lookups, version checks, deep scans, alert webhooks and managed telemetry each send specific data
+              and can be disabled. They are listed in the privacy draft.
             </p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              {isLoaded && isSignedIn ? (
-                <Link href="/dashboard" style={btnPrimary}>
-                  Go to Dashboard
-                </Link>
-              ) : (
-                <Link href="/login" style={btnPrimary}>
-                  Get Started Free
-                </Link>
-              )}
-              <a
-                href="https://github.com/singularityrd/aidr"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={btnSecondary}
-              >
-                GitHub →
-              </a>
-            </div>
-          </div>
-        </Section>
+          </article>
+          <article className="doc-card">
+            <h3>Failure handling</h3>
+            <p>Failure policy differs by layer: detection signals are skipped on error, connector entry points block, security controls fail closed.</p>
+          </article>
+          <article className="doc-card">
+            <h3>Honest assurance status</h3>
+            <p>
+              No certification is claimed. Read the <Link href="/security">security overview</Link> and the{" "}
+              <Link href="/trust">trust center</Link>.
+            </p>
+          </article>
+        </div>
+      </section>
 
-        {/* ════════════════════════════════════════ INSTALL PROMPT ═════════ */}
-        <section style={{ width: "100%", marginBottom: 22 }}>
-          <InstallPromptCard />
-        </section>
-      </main>
-    </div>
+      <section id="pricing" className="doc-section" aria-labelledby="pricing-heading">
+        <p className="doc-eyebrow">Evaluation and pricing</p>
+        <h2 id="pricing-heading">Start with a 14-day evaluation</h2>
+        <p>
+          {EVALUATION.sentence} {PRICING_STATEMENT}
+        </p>
+        <div className="btn-row">
+          <Link href="/pilot" className="btn">
+            Apply for the evaluation
+          </Link>
+          <Link href="/pricing" className="btn btn-secondary">
+            Evaluation and pricing
+          </Link>
+          <Link href="/contact?topic=sales" className="btn btn-secondary">
+            Contact sales
+          </Link>
+        </div>
+      </section>
+
+      <section id="faq" className="doc-section" aria-labelledby="faq-heading">
+        <p className="doc-eyebrow">FAQ</p>
+        <h2 id="faq-heading">Frequently asked questions</h2>
+        <div style={{ display: "grid", gap: 10 }}>
+          {faqs.map((faq) => (
+            <details key={faq.q} className="doc-card" style={{ padding: "14px 18px" }}>
+              <summary style={{ fontSize: 15, fontWeight: 500, color: "var(--text-primary)", cursor: "pointer" }}>{faq.q}</summary>
+              <p style={{ marginTop: 10 }}>{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+    </PageShell>
   );
 }

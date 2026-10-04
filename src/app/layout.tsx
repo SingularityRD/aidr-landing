@@ -8,34 +8,47 @@ import { ClerkToAuthBridge } from "../components/ClerkToAuthBridge";
 import { isDemoMode } from "../lib/demo";
 import { ThemeProvider } from "../components/ThemeProvider";
 import Footer from "../components/Footer";
+import ConsentBanner from "../components/site/ConsentBanner";
+import { COMPANY_NAME, SITE_NAME, getSiteUrl } from "../lib/site/config";
 import "./globals.css";
+import "./site.css";
+
+const DESCRIPTION =
+  "Singularity AIDR checks the tool calls of AI coding agents (shell commands, file operations, web requests, MCP calls) against detection rules and policy. Offered as a 14-day, 1-agent controlled evaluation.";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "Singularity AIDR // AI Agent Detection & Response",
     template: "%s // AIDR",
   },
-  description:
-    "AI Agent Detection & Response (AIDR). Protect your AI coding agents from prompt injection, malicious commands, and supply chain attacks. 1 agent free forever. Supports Claude Code, Cursor, VS Code, OpenClaw, and OpenCode.",
+  description: DESCRIPTION,
+  applicationName: SITE_NAME,
   keywords: [
-    "AI security", "agent detection", "AI agent protection", "prompt injection prevention",
-    "supply chain security", "Claude Code security", "AI guardrails", "MLsec",
-    "Singularity AIDR", "AI Agent Detection Response",
+    "AI agent security",
+    "agent detection and response",
+    "AI coding agent",
+    "prompt injection",
+    "MCP security",
+    "Claude Code",
+    "Cursor",
+    "VS Code",
   ],
-  authors: [{ name: "Singularity Research & Development" }],
+  authors: [{ name: COMPANY_NAME }],
   icons: {
     icon: "/icon.png",
   },
   openGraph: {
-    title: "Singularity AIDR — AI Agent Detection & Response",
-    description: "Edge-first security layer for AI coding agents. Install by prompt, protect in minutes. 1 agent free.",
+    title: "Singularity AIDR // AI Agent Detection & Response",
+    description: DESCRIPTION,
     type: "website",
-    siteName: "Singularity AIDR",
+    siteName: SITE_NAME,
+    url: "/",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Singularity AIDR — AI Agent Detection & Response",
-    description: "Edge-first security layer for AI coding agents. Install by prompt, protect in minutes. 1 agent free.",
+    title: "Singularity AIDR // AI Agent Detection & Response",
+    description: DESCRIPTION,
   },
   robots: {
     index: true,
@@ -76,9 +89,13 @@ export default function RootLayout({
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} ${GeistPixelSquare.variable} ${GeistPixelLine.variable} ${GeistPixelSquare.className}`}
       >
+        <a href="#main" className="skip-link">
+          Skip to main content
+        </a>
         <ThemeProvider>
           {children}
           <Footer />
+          <ConsentBanner />
         </ThemeProvider>
       </body>
     </html>

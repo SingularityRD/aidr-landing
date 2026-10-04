@@ -26,10 +26,10 @@ export default function WaitlistPage() {
   return (
     <div className="stack">
       <div className="card">
-        <h1>Waitlist</h1>
+        <h1>Evaluation waitlist</h1>
         <p className="muted">
-          Get early access updates and pilot invites. We&apos;ll prioritize teams actively running AI
-          agents in production.
+          Get updates about the 14-day evaluation. Joining the waitlist does not grant access, and we do not
+          commit to a reply time.
         </p>
       </div>
 
@@ -82,7 +82,7 @@ export default function WaitlistPage() {
                   setStatus(res.error.message);
                   return;
                 }
-                setStatus("You're on the list. We'll reach out soon.");
+                setStatus("You are on the list. We will email you if an evaluation place opens.");
                 setName("");
                 setEmail("");
                 setCompany("");
@@ -96,7 +96,7 @@ export default function WaitlistPage() {
           </button>
         </div>
 
-        {status ? <div className="notice">{status}</div> : null}
+        {status ? <div className="notice" role="status">{status}</div> : null}
       </div>
     </div>
   );

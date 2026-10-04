@@ -99,8 +99,8 @@ export default function OnboardingPage() {
               Welcome{user?.firstName ? `, ${user.firstName}` : ""}
             </h1>
             <p style={{ color: "var(--text-secondary)", lineHeight: "26px", maxWidth: 900, margin: 0 }}>
-              You have <b>1 free agent</b> included. Copy the prompt below and paste it into any AI agent
-              runtime — Claude Code, Cursor, VS Code, OpenClaw, or OpenCode.
+              Your evaluation covers <b>1 protected agent for 14 days</b>. Copy the prompt below and paste it into one of
+              the supported agent runtimes: Claude Code, Cursor, VS Code, OpenClaw, or OpenCode.
             </p>
             {demoMode && (
               <div style={{ marginTop: 8, fontSize: 12, color: "var(--accent)", fontWeight: 500 }}>
@@ -188,7 +188,8 @@ export default function OnboardingPage() {
           🛡️ Protect Your First Agent
         </h2>
         <p style={{ color: "var(--text-secondary)", lineHeight: "24px", margin: "0 0 16px" }}>
-          This prompt works in <b>any</b> AI runtime. Copy, paste, and your agent installs AIDR automatically.
+          Copy this prompt and paste it into a supported agent runtime. The agent installs the approved connector for you;
+          review each command it proposes before you allow it.
         </p>
 
         {!installPrompt ? (
@@ -266,9 +267,9 @@ export default function OnboardingPage() {
         <div style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: "26px" }}>
           1. Click <b>Generate Install Prompt</b> above<br />
           2. Copy the prompt and paste it into your AI agent chat<br />
-          3. Your agent runs the install command automatically<br />
+          3. Your agent proposes the install commands, and you review them<br />
           4. Click the authorization link (you&apos;re already signed in)<br />
-          5. Done — your agent is now protected 🛡️
+          5. Done. Check the dashboard for the first heartbeat before relying on protection.
         </div>
       </section>
 
@@ -283,10 +284,10 @@ export default function OnboardingPage() {
           }}
         >
           <h3 style={{ fontSize: 18, color: "var(--text-primary)", marginBottom: 8 }}>
-            Need more agents?
+            More agents?
           </h3>
           <p style={{ color: "var(--text-secondary)", lineHeight: "24px", margin: "0 0 12px" }}>
-            Upgrade to Pro for <b>$2/month per agent</b>. Protect your entire AI toolkit.
+            Additional agents are added by approved order. Contact sales before starting checkout.
           </p>
           <a
             href="/billing"
@@ -302,7 +303,7 @@ export default function OnboardingPage() {
               fontWeight: 500,
             }}
           >
-            Upgrade to Pro →
+            Billing →
           </a>
         </section>
       )}

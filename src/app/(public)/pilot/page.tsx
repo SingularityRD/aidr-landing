@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getFirebaseBrowserClient } from "../../../lib/firebase/database-client";
 import { getSession } from "../../../lib/auth/session";
+import { EVALUATION } from "../../../lib/site/claims";
 
 type PilotStatus =
   | { status: "none" }
@@ -56,7 +57,8 @@ export default function PilotPage() {
   if (!sessionReady) {
     return (
       <div className="card">
-        <div className="muted">Loading…</div>
+        <h1>14-day evaluation</h1>
+        <div className="muted" role="status">Loading…</div>
       </div>
     );
   }
@@ -64,10 +66,11 @@ export default function PilotPage() {
   return (
     <div className="stack">
       <div className="card">
-        <h1>Free Pilot</h1>
+        <h1>14-day evaluation</h1>
         <p className="muted">
-          Pilot access is approval-gated to keep support responsive and reduce false positives. Once
-          approved, you can enroll 1 agent for free.
+          {EVALUATION.sentence} Access is approval-gated so we can keep support responsive and tune detections with each
+          participant. Use test or low-risk projects, not production data. There is no service-level agreement during the
+          evaluation, and the <Link href="/terms">terms</Link> are a draft pending legal review.
         </p>
 
         {!hasSession ? (
@@ -96,16 +99,17 @@ export default function PilotPage() {
 
       {hasSession ? (
         <div className="card">
-          <h2>Apply</h2>
+          <h2>Apply for the evaluation</h2>
           <p className="muted">Tell us what you&apos;re protecting (runtime, tools, threat model).</p>
-          <label className="label">
+          <label className="label" htmlFor="pilot-use-case">
             Use case
             <textarea
+              id="pilot-use-case"
               className="input"
               style={{ minHeight: 140, resize: "vertical" }}
               value={useCase}
               onChange={(e) => setUseCase(e.target.value)}
-              placeholder="Claude Code/Cursor/OpenClaw/OpenCode, tools, constraints, risks…"
+              placeholder="Which agent host, which tools, constraints and risks you want to cover"
             />
           </label>
 
@@ -140,7 +144,7 @@ export default function PilotPage() {
             </Link>
           </div>
 
-          {error ? <div className="notice notice-danger">{error}</div> : null}
+          {error ? <div className="notice notice-danger" role="alert">{error}</div> : null}
         </div>
       ) : null}
     </div>

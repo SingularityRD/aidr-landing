@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface SeatInfo {
@@ -66,7 +67,7 @@ export default function BillingPage() {
         >
           <div style={{ padding: 16, borderRadius: 12, background: "var(--bg-secondary)", border: "1px solid var(--panel-border)" }}>
             <div style={{ fontSize: 12, color: "var(--text-faint)" }}>Plan</div>
-            <div style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", marginTop: 4 }}>Free</div>
+            <div style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", marginTop: 4 }}>Evaluation</div>
           </div>
           <div style={{ padding: 16, borderRadius: 12, background: "var(--bg-secondary)", border: "1px solid var(--panel-border)" }}>
             <div style={{ fontSize: 12, color: "var(--text-faint)" }}>Agents</div>
@@ -75,8 +76,8 @@ export default function BillingPage() {
             </div>
           </div>
           <div style={{ padding: 16, borderRadius: 12, background: "var(--bg-secondary)", border: "1px solid var(--panel-border)" }}>
-            <div style={{ fontSize: 12, color: "var(--text-faint)" }}>Monthly Cost</div>
-            <div style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", marginTop: 4 }}>$0</div>
+            <div style={{ fontSize: 12, color: "var(--text-faint)" }}>Pricing</div>
+            <div style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", marginTop: 4 }}>By approved order</div>
           </div>
         </div>
 
@@ -94,7 +95,7 @@ export default function BillingPage() {
             />
           </div>
           <div style={{ marginTop: 6, fontSize: 12, color: "var(--text-faint)" }}>
-            {usagePercent.toFixed(0)}% of free tier used
+            {usagePercent.toFixed(0)}% of the evaluation agent allowance used
           </div>
         </div>
       </div>
@@ -106,15 +107,14 @@ export default function BillingPage() {
           background: "linear-gradient(135deg, rgba(56,98,232,0.08), rgba(118,75,162,0.08))",
         }}
       >
-        <h2 style={{ fontSize: 20, color: "var(--text-primary)", marginBottom: 8 }}>Upgrade to Pro</h2>
+        <h2 style={{ fontSize: 20, color: "var(--text-primary)", marginBottom: 8 }}>More agents</h2>
         <p style={{ color: "var(--text-secondary)", lineHeight: "24px", margin: "0 0 16px" }}>
-          Need more agents? $5/agent/month ($4/agent/month billed yearly). Upgrade to Pro and protect your entire AI toolkit.
+          Additional agents are added by approved order. Pricing is not published on this site and nothing here is a quote.{" "}
+          <Link href="/contact?topic=sales" style={{ color: "var(--text-primary)" }}>
+            Contact sales
+          </Link>{" "}
+          before starting checkout.
         </p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-            <div style={{ fontSize: 24, fontWeight: 600, color: "var(--text-primary)" }}>$5</div>
-            <div style={{ color: "var(--text-faint)", fontSize: 14 }}>/ agent / month</div>
-          </div>
-          <div style={{ color: "var(--text-faint)", fontSize: 12, marginTop: 4 }}>$4/agent/month billed yearly</div>
         <button
           onClick={async () => {
             setLoading(true);
@@ -147,7 +147,7 @@ export default function BillingPage() {
             cursor: canCheckout ? "pointer" : "not-allowed",
           }}
         >
-          {loading ? "Loading…" : "Upgrade to Pro"}
+          {loading ? "Loading…" : "Start checkout for an agreed order"}
         </button>
       </div>
     </div>
