@@ -794,7 +794,7 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
 
     it("works in required mode (version label is opaque) and persists a verified offline cache", async () => {
       const e = await enrollDevice("tenant_policy_2");
-      db.seed(`users/${e.uid}/settings/current`, { runtime_policy: published, runtime_policy_version: "pol_20260506101000" });
+      db.seed(`users/${e.uid}/settings/current`, { runtime_policy: published, runtime_policy_version: "pol_20260506101000", runtime_policy_published_at: "2026-05-06T10:10:00.000Z" });
       const cachePath = join(aidrDir, "remote-policy-cache.json");
       const required = core.ConfigSchema.parse(
         configInput({ control_plane: { endpoint: ENDPOINT, timeout_seconds: 5, remote_policy_required: true, remote_policy_cache_path: cachePath } }),
@@ -807,7 +807,7 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
 
     it("rejects a policy tampered in transit (digest mismatch) and a digest swapped for another policy", async () => {
       const e = await enrollDevice("tenant_policy_3");
-      db.seed(`users/${e.uid}/settings/current`, { runtime_policy: published, runtime_policy_version: "pol_1" });
+      db.seed(`users/${e.uid}/settings/current`, { runtime_policy: published, runtime_policy_version: "pol_1", runtime_policy_published_at: "2026-05-06T10:10:00.000Z" });
       const required = core.ConfigSchema.parse(
         configInput({ control_plane: { endpoint: ENDPOINT, timeout_seconds: 5, remote_policy_required: true, remote_policy_cache_path: join(aidrDir, "remote-policy-cache.json") } }),
       );
@@ -828,13 +828,170 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
     it("never serves another tenant's policy: tenant comes from the token only", async () => {
       const a = await enrollDevice("tenant_policy_a");
       const b = await enrollDevice("tenant_policy_b");
-      db.seed(`users/${a.uid}/settings/current`, { runtime_policy: { ...published, command_default: "deny" }, runtime_policy_version: "pol_a" });
-      db.seed(`users/${b.uid}/settings/current`, { runtime_policy: { ...published, command_default: "allow" }, runtime_policy_version: "pol_b" });
+      db.seed(`users/${a.uid}/settings/current`, { runtime_policy: { ...published, command_default: "deny" }, runtime_policy_version: "pol_a", runtime_policy_published_at: "2026-05-06T10:10:00.000Z" });
+      db.seed(`users/${b.uid}/settings/current`, { runtime_policy: { ...published, command_default: "allow" }, runtime_policy_version: "pol_b", runtime_policy_published_at: "2026-05-06T10:10:00.000Z" });
       const fetched = async (key: string) =>
         (await (await fetch(`${ENDPOINT}/v1/policy?uid=${a.uid}&tenant=${a.uid}`, { headers: { authorization: `Bearer ${key}`, "x-tenant-id": a.uid } })).json()) as Record<string, any>;
       expect((await fetched(b.apiKey)).runtime_policy.command_default).toBe("allow");
       expect((await fetched(a.apiKey)).runtime_policy.command_default).toBe("deny");
       expect((await fetched(b.apiKey)).agent_id).toBe(b.agentId);
+    });
+
+    describe("Ed25519 policy signature", () => {
+      const POLICY_ENV = ["AIDR_POLICY_SIGNING_KEY_ID", "AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64", "AIDR_ENTITLEMENT_SIGNING_KEY_ID", "AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64"] as const;
+      const saved: Partial<Record<(typeof POLICY_ENV)[number], string | undefined>> = {};
+      let cacheN = 0;
+      let policyPublicPem: string;
+      let wrongPublicPem: string;
+
+      beforeAll(() => {
+        const pair = generateKeyPairSync("ed25519");
+        policyPublicPem = pair.publicKey.export({ type: "spki", format: "pem" }).toString();
+        wrongPublicPem = generateKeyPairSync("ed25519").publicKey.export({ type: "spki", format: "pem" }).toString();
+        for (const k of POLICY_ENV) saved[k] = process.env[k];
+        process.env.AIDR_POLICY_SIGNING_KEY_ID = "policy-key-1";
+        process.env.AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64 = pair.privateKey.export({ type: "pkcs8", format: "der" }).toString("base64");
+      });
+      afterAll(() => {
+        for (const k of POLICY_ENV) {
+          if (saved[k] === undefined) delete process.env[k];
+          else process.env[k] = saved[k];
+        }
+      });
+
+      const publish = (uid: string, publishedAt: string, extra: Record<string, unknown> = {}) =>
+        db.seed(`users/${uid}/settings/current`, {
+          runtime_policy: published,
+          runtime_policy_version: "pol_20260506101000",
+          runtime_policy_published_at: publishedAt,
+          ...extra,
+        });
+      const connectorConfig = (policyKeys: string[], required = true) => {
+        const cachePath = join(aidrDir, `signed-policy-cache-${++cacheN}.json`);
+        return core.ConfigSchema.parse(
+          configInput({
+            control_plane: { endpoint: ENDPOINT, timeout_seconds: 5, remote_policy_required: required, remote_policy_cache_path: cachePath, policy_public_keys_pem: policyKeys },
+          }),
+        );
+      };
+
+      it("delivers key_id, algorithm, signature, version, sequence and validity that the connector verifies with the policy key", async () => {
+        const e = await enrollDevice("tenant_sig_1");
+        publish(e.uid, "2026-05-06T10:10:00.000Z");
+        const fetched = await clientFor(e.apiKey).fetchRuntimePolicy();
+        const signed = (fetched.body as Record<string, any>).policy_signed;
+        expect(signed).toMatchObject({
+          alg: "ed25519",
+          key_id: "policy-key-1",
+          sig_b64: expect.any(String),
+          envelope: {
+            schema_version: 1,
+            key_id: "policy-key-1",
+            policy_version: "pol_20260506101000",
+            policy_sha256: (fetched.body as Record<string, unknown>).policy_sha256,
+            sequence: Date.parse("2026-05-06T10:10:00.000Z"),
+            tenant_id: e.uid,
+          },
+        });
+        expect(Date.parse(signed.envelope.expires_at) - Date.parse(signed.envelope.issued_at)).toBe(24 * 3_600_000);
+        // Policy key (not the entitlement key) verifies it.
+        const synced = await core.syncRemoteRuntimePolicy(connectorConfig([policyPublicPem]), e.apiKey);
+        expect(synced.policy.runtime_defaults).toMatchObject({ command_action: "block" });
+      });
+
+      it("a connector trusting a different key refuses the policy (required mode fails closed, optional ignores it)", async () => {
+        const e = await enrollDevice("tenant_sig_2");
+        publish(e.uid, "2026-05-06T10:10:00.000Z");
+        await expect(core.syncRemoteRuntimePolicy(connectorConfig([wrongPublicPem]), e.apiKey)).rejects.toThrow(/central policy is unavailable/);
+        const optional = await core.syncRemoteRuntimePolicy(connectorConfig([wrongPublicPem], false), e.apiKey);
+        expect(optional.policy.enabled).toBe(false);
+      });
+
+      it("rejects an unsigned policy when the connector holds policy keys", async () => {
+        const e = await enrollDevice("tenant_sig_3");
+        publish(e.uid, "2026-05-06T10:10:00.000Z");
+        interceptResponse = async (op, response) => {
+          if (op !== "policy") return response;
+          const body = (await response.json()) as Record<string, unknown>;
+          delete body.policy_signed;
+          return new Response(JSON.stringify(body), { status: 200 });
+        };
+        await expect(core.syncRemoteRuntimePolicy(connectorConfig([policyPublicPem]), e.apiKey)).rejects.toThrow(/central policy is unavailable/);
+      });
+
+      it("rejects a policy whose body is tampered after signing, even with the digest recomputed", async () => {
+        const e = await enrollDevice("tenant_sig_4");
+        publish(e.uid, "2026-05-06T10:10:00.000Z");
+        const { runtimePolicySha256 } = await import("../policy");
+        interceptResponse = async (op, response) => {
+          if (op !== "policy") return response;
+          const body = (await response.json()) as Record<string, any>;
+          body.runtime_policy = { ...body.runtime_policy, command_default: "allow" };
+          body.policy_sha256 = runtimePolicySha256(body.runtime_policy);
+          return new Response(JSON.stringify(body), { status: 200 });
+        };
+        await expect(core.syncRemoteRuntimePolicy(connectorConfig([policyPublicPem]), e.apiKey)).rejects.toThrow(/central policy is unavailable/);
+      });
+
+      it("rejects a replayed older signed policy after a newer one was applied", async () => {
+        const e = await enrollDevice("tenant_sig_5");
+        publish(e.uid, "2026-05-06T10:10:00.000Z");
+        const config = connectorConfig([policyPublicPem]);
+        let captured: string | null = null;
+        interceptResponse = async (op, response) => {
+          if (op === "policy") captured = await response.clone().text();
+          return response;
+        };
+        await core.syncRemoteRuntimePolicy(config, e.apiKey);
+        const older = captured as unknown as string;
+        // Operator publishes a stricter policy later.
+        publish(e.uid, "2026-05-06T11:00:00.000Z", { runtime_policy: { ...published, command_default: "ask" }, runtime_policy_version: "pol_20260506110000" });
+        interceptResponse = null;
+        core.clearRemoteRuntimePolicyCacheForTests();
+        const later = Date.now() + 120_000;
+        expect((await core.syncRemoteRuntimePolicy(config, e.apiKey, undefined, later)).policy.runtime_defaults.command_action).toBe("require_approval");
+        // Attacker replays the old, validly signed, still-unexpired response.
+        interceptResponse = async (op, response) => (op === "policy" ? new Response(older, { status: 200 }) : response);
+        core.clearRemoteRuntimePolicyCacheForTests();
+        await expect(core.syncRemoteRuntimePolicy(config, e.apiKey, undefined, later + 120_000)).rejects.toThrow(/central policy is unavailable/);
+      });
+
+      it("rejects a signed policy once its validity window has passed", async () => {
+        const e = await enrollDevice("tenant_sig_6");
+        publish(e.uid, "2026-05-06T10:10:00.000Z");
+        const farFuture = Date.now() + 3 * 24 * 3_600_000;
+        await expect(core.syncRemoteRuntimePolicy(connectorConfig([policyPublicPem]), e.apiKey, undefined, farFuture)).rejects.toThrow(/central policy is unavailable/);
+      });
+
+      it("falls back to the entitlement key (licensing.public_keys_pem) when no policy key is provisioned", async () => {
+        const e = await enrollDevice("tenant_sig_7");
+        publish(e.uid, "2026-05-06T10:10:00.000Z");
+        const keepId = process.env.AIDR_POLICY_SIGNING_KEY_ID;
+        const keepKey = process.env.AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64;
+        delete process.env.AIDR_POLICY_SIGNING_KEY_ID;
+        delete process.env.AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64;
+        try {
+          const fetched = await clientFor(e.apiKey).fetchRuntimePolicy();
+          expect((fetched.body as Record<string, any>).policy_signed.key_id).toBe("test-key-1");
+          const synced = await core.syncRemoteRuntimePolicy(connectorConfig([]), e.apiKey);
+          expect(synced.policy.runtime_defaults).toMatchObject({ command_action: "block" });
+        } finally {
+          process.env.AIDR_POLICY_SIGNING_KEY_ID = keepId;
+          process.env.AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64 = keepKey;
+        }
+      });
+
+      it("a half-provisioned policy key fails closed with 503 instead of serving an unsigned policy", async () => {
+        const e = await enrollDevice("tenant_sig_8");
+        publish(e.uid, "2026-05-06T10:10:00.000Z");
+        const keep = process.env.AIDR_POLICY_SIGNING_KEY_ID;
+        delete process.env.AIDR_POLICY_SIGNING_KEY_ID;
+        try {
+          expect(await clientFor(e.apiKey).fetchRuntimePolicy()).toMatchObject({ ok: false, status: 503, error: "policy_signing_unavailable" });
+        } finally {
+          process.env.AIDR_POLICY_SIGNING_KEY_ID = keep;
+        }
+      });
     });
 
     it("computes policy_sha256 with the connector's canonical form for every policy shape", async () => {

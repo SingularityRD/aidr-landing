@@ -49,15 +49,23 @@ const requiredEnvVars = [
   'FIREBASE_PROJECT_ID',
   'FIREBASE_CLIENT_EMAIL',
   'FIREBASE_PRIVATE_KEY',
-  'POLAR_ACCESS_TOKEN',
-  'POLAR_PRICE_MONTHLY_ID',
   'POLAR_WEBHOOK_SECRET',
 ];
 
+// Checkout is off unless an order is approved: set AIDR_BILLING_CHECKOUT_ENABLED=1 together with the
+// approved order's POLAR_PRICE_MONTHLY_ID and POLAR_ACCESS_TOKEN. No price is configured in code.
 const optionalEnvVars = [
+  'AIDR_BILLING_CHECKOUT_ENABLED',
+  'POLAR_ACCESS_TOKEN',
+  'POLAR_PRICE_MONTHLY_ID',
   'NEXT_PUBLIC_DASHBOARD_URL',
   'AIDR_CRON_SECRET',
   'AIDR_POLICY_SIGNING_SECRET',
+  'AIDR_POLICY_SIGNING_KEY_ID',
+  'AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64',
+  'AIDR_POLICY_SIGNATURE_TTL_HOURS',
+  'AIDR_ENTITLEMENT_SIGNING_KEY_ID',
+  'AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64',
   'SENTRY_AUTH_TOKEN',
   'SENTRY_DSN',
 ];
@@ -75,6 +83,39 @@ const validationMessages = {
   AIDR_AGENT_TOKEN_SECRET: 'must be at least 32 characters',
   POLAR_WEBHOOK_SECRET: 'must be at least 16 characters',
 };
+
+// Ed25519 signing keys (signed policy / entitlements): the key id and PKCS#8 private key must be
+// provisioned together, the key must parse as Ed25519, and the policy TTL must be 1..720 hours.
+function checkSigningKeys() {
+  const crypto = require('node:crypto');
+  let ok = true;
+  for (const [idVar, keyVar] of [
+    ['AIDR_POLICY_SIGNING_KEY_ID', 'AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64'],
+    ['AIDR_ENTITLEMENT_SIGNING_KEY_ID', 'AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64'],
+  ]) {
+    const id = (process.env[idVar] || '').trim();
+    const key = (process.env[keyVar] || '').trim();
+    if (!id && !key) continue;
+    if (!id || !key) {
+      console.error(`❌ ${idVar}/${keyVar}: set both or neither (a half-configured pair makes the control plane return 503)`);
+      ok = false;
+      continue;
+    }
+    try {
+      const parsed = crypto.createPrivateKey({ key: Buffer.from(key, 'base64'), format: 'der', type: 'pkcs8' });
+      if (parsed.asymmetricKeyType !== 'ed25519') throw new Error('not ed25519');
+    } catch {
+      console.error(`❌ ${keyVar}: must be a base64 PKCS#8 DER Ed25519 private key`);
+      ok = false;
+    }
+  }
+  const ttl = (process.env.AIDR_POLICY_SIGNATURE_TTL_HOURS || '').trim();
+  if (ttl && !(/^\d+$/.test(ttl) && Number(ttl) >= 1 && Number(ttl) <= 720)) {
+    console.error('❌ AIDR_POLICY_SIGNATURE_TTL_HOURS: must be an integer from 1 to 720');
+    ok = false;
+  }
+  return ok;
+}
 
 function checkEnvVars() {
   console.log('🔍 Checking environment variables...\n');
@@ -110,6 +151,8 @@ function checkEnvVars() {
     }
   }
   
+  if (!checkSigningKeys()) hasErrors = true;
+
   console.log('\n---');
   
   if (hasErrors) {

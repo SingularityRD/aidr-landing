@@ -59,7 +59,16 @@ Set these in `.env.local` for Clerk + Firestore:
 - `CLERK_SECRET_KEY`
 - `AIDR_AGENT_TOKEN_SECRET` (>= 32 chars)
 - `AIDR_CRON_SECRET` (>= 32 chars, required when enabling scheduled internal jobs)
-- `AIDR_POLICY_SIGNING_SECRET` (>= 32 chars, recommended for signed runtime policy versions)
+- `AIDR_POLICY_SIGNING_SECRET` (>= 32 chars, legacy HMAC over the policy version; connectors cannot verify it)
+- `AIDR_POLICY_SIGNING_KEY_ID` + `AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64` (Ed25519 PKCS#8 DER, base64; set both or neither): signs `GET /v1/policy` as `policy_signed` so connectors holding the public key (`control_plane.policy_public_keys_pem`) can verify it. A dedicated key is recommended; when unset the entitlement key below is reused; with neither the policy is served unsigned.
+- `AIDR_POLICY_SIGNATURE_TTL_HOURS` (optional, 1-720, default 24): how long a signed policy response stays acceptable to a connector (also caps offline-grace use)
+- `AIDR_ENTITLEMENT_SIGNING_KEY_ID` + `AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64` (Ed25519, same format): signs entitlement snapshots for `licensing.public_keys_pem`
+
+Generate a signing key pair (publish only the public key to connectors):
+
+```bash
+node -e "const c=require('crypto');const k=c.generateKeyPairSync('ed25519');console.log('AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64='+k.privateKey.export({type:'pkcs8',format:'der'}).toString('base64'));console.log(k.publicKey.export({type:'spki',format:'pem'}))"
+```
 
 Firebase client config (for browser SDK usage):
 
