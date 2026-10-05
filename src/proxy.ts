@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isDemoMode } from "@/lib/demo";
 import { isPublicApiV1Action } from "@/lib/control-plane/api-v1-access";
 import { buildContentSecurityPolicy, generateNonce } from "@/lib/csp";
+import { clerkServerConfigured } from "@/lib/clerk-config";
 
 const isAppRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -36,6 +37,24 @@ function nextWithCsp(request: NextRequest) {
 
 const demoMiddleware = (request: NextRequest) => nextWithCsp(request);
 
+/**
+ * Used when Clerk is not configured (missing or placeholder keys). The public site keeps serving; anything that
+ * needs an identity fails closed with 503 rather than being let through or taking the whole site down.
+ */
+const unconfiguredMiddleware = (request: NextRequest) => {
+  const path = request.nextUrl.pathname;
+  const needsIdentity =
+    isAppRoute(request) ||
+    (isApiRoute(request) && !isPublicApiV1Action(path.split("/")[3] || ""));
+  if (needsIdentity) {
+    return NextResponse.json(
+      { error: "authentication_unavailable" },
+      { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "300" } },
+    );
+  }
+  return nextWithCsp(request);
+};
+
 const protectedMiddleware = clerkMiddleware(async (auth, request) => {
   if (isAppRoute(request)) {
     await auth.protect();
@@ -52,7 +71,11 @@ const protectedMiddleware = clerkMiddleware(async (auth, request) => {
   return nextWithCsp(request);
 });
 
-export default isDemoMode() ? demoMiddleware : protectedMiddleware;
+export default isDemoMode()
+  ? demoMiddleware
+  : clerkServerConfigured()
+    ? protectedMiddleware
+    : unconfiguredMiddleware;
 
 export const config = {
   matcher: [

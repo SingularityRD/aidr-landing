@@ -23,6 +23,18 @@ export const AuthContext = createContext<AuthContextValue>({
   user: null,
 });
 
+/** True only where a working auth provider (Clerk) is mounted; sign-in UI must not render otherwise. */
+export const AuthAvailableContext = createContext<boolean>(false);
+
+/** Marks a subtree as having a working auth provider. A component, because server layouts cannot touch a client context object. */
+export function AuthAvailableProvider({ children }: { children: ReactNode }) {
+  return <AuthAvailableContext.Provider value={true}>{children}</AuthAvailableContext.Provider>;
+}
+
+export function useAuthAvailable(): boolean {
+  return useContext(AuthAvailableContext);
+}
+
 export function useAuthContext(): AuthContextValue {
   return useContext(AuthContext);
 }
@@ -48,5 +60,9 @@ export function DemoAuthProvider({ children }: DemoAuthProviderProps) {
     []
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthAvailableContext.Provider value={true}>
+      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    </AuthAvailableContext.Provider>
+  );
 }

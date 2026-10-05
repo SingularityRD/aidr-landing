@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SignInButton, UserButton } from "@clerk/nextjs";
 import { useSmartUser } from "../hooks/useSmartUser";
 import { isDemoMode } from "../lib/demo";
+import { useAuthAvailable } from "./DemoAuthProvider";
 
 const navLinks = [
   { href: "/#features", label: "Product" },
@@ -32,6 +33,7 @@ const signInStyle: React.CSSProperties = {
 export default function Header() {
   const { isSignedIn, isLoaded } = useSmartUser();
   const demo = isDemoMode();
+  const authAvailable = useAuthAvailable();
 
   return (
     <header className="site-header">
@@ -92,7 +94,7 @@ export default function Header() {
                 />
               )}
             </>
-          ) : demo ? (
+          ) : demo || !authAvailable ? (
             <Link href="/login" style={signInStyle}>
               Sign in
             </Link>

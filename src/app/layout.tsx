@@ -4,9 +4,10 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { GeistPixelSquare, GeistPixelLine } from "geist/font/pixel";
 import { ClerkProvider } from "@clerk/nextjs";
-import { DemoAuthProvider } from "../components/DemoAuthProvider";
+import { AuthAvailableProvider, DemoAuthProvider } from "../components/DemoAuthProvider";
 import { ClerkToAuthBridge } from "../components/ClerkToAuthBridge";
 import { isDemoMode } from "../lib/demo";
+import { clerkServerConfigured } from "../lib/clerk-config";
 import { ThemeProvider } from "../components/ThemeProvider";
 import Footer from "../components/Footer";
 import ConsentBanner from "../components/site/ConsentBanner";
@@ -66,28 +67,12 @@ export default async function RootLayout({
   // inline scripts, which a prerendered page cannot do.
   await connection();
 
-  const enforceProductionKeys =
-    process.env.NODE_ENV === "production" &&
-    (process.env.AIDR_ENFORCE_PROD_KEYS === "1" || process.env.VERCEL_ENV === "production");
-
-  if (enforceProductionKeys) {
-    const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim() ?? "";
-    const secretKey = process.env.CLERK_SECRET_KEY?.trim() ?? "";
-    if (!publishableKey) {
-      throw new Error("Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY in production.");
-    }
-    if (!secretKey) {
-      throw new Error("Missing CLERK_SECRET_KEY in production.");
-    }
-    if (publishableKey.startsWith("pk_test_")) {
-      throw new Error("Production cannot run with a Clerk test publishable key.");
-    }
-    if (secretKey.startsWith("sk_test_")) {
-      throw new Error("Production cannot run with a Clerk test secret key.");
-    }
-  }
-
   const demo = isDemoMode();
+  const clerkReady = !demo && clerkServerConfigured();
+  if (!demo && !clerkReady) {
+    // Sign-in and protected routes are disabled (see src/proxy.ts); the public site keeps serving.
+    console.error("Clerk is not configured for this deployment: sign-in and app routes are disabled.");
+  }
 
   const body = (
     <html lang="en" suppressHydrationWarning>
@@ -110,9 +95,15 @@ export default async function RootLayout({
     return <DemoAuthProvider>{body}</DemoAuthProvider>;
   }
 
+  if (!clerkReady) {
+    return body;
+  }
+
   return (
     <ClerkProvider dynamic>
-      <ClerkToAuthBridge>{body}</ClerkToAuthBridge>
+      <AuthAvailableProvider>
+        <ClerkToAuthBridge>{body}</ClerkToAuthBridge>
+      </AuthAvailableProvider>
     </ClerkProvider>
   );
 }
