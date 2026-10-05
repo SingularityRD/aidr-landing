@@ -13,8 +13,16 @@ interface SeatInfo {
 export default function BillingPage() {
   const [seats, setSeats] = useState<SeatInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  // Checkout exists only for an approved order; the server decides (AIDR_BILLING_CHECKOUT_ENABLED).
+  const [checkoutEnabled, setCheckoutEnabled] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
+    fetch("/api/v1/billing-config")
+      .then((r) => (r.ok ? r.json() : { checkout_enabled: false }))
+      .then((cfg) => setCheckoutEnabled(cfg?.checkout_enabled === true))
+      .catch(() => setCheckoutEnabled(false));
+
     fetch("/api/v1/agents/count")
       .then((r) => r.json())
       .then((agentData) => {
@@ -49,7 +57,7 @@ export default function BillingPage() {
   }
 
   const usagePercent = seats ? Math.min(100, (seats.current_agents / seats.allowed_agents) * 100) : 0;
-  const canCheckout = !loading;
+  const canCheckout = !loading && checkoutEnabled;
 
   return (
     <div className="stack" style={{ maxWidth: 800, margin: "0 auto", padding: "24px 20px" }}>
@@ -112,10 +120,17 @@ export default function BillingPage() {
           Additional agents are added by approved order. Pricing is not published on this site and nothing here is a quote.{" "}
           <Link href="/contact?topic=sales" style={{ color: "var(--text-primary)" }}>
             Contact sales
-          </Link>{" "}
-          before starting checkout.
+          </Link>
+          {checkoutEnabled
+            ? " before starting checkout."
+            : ". Checkout is not enabled for this workspace; once an order is approved we enable it and this page will offer it."}
         </p>
-        <button
+        {checkoutError ? (
+          <p role="alert" style={{ color: "#ef4444", margin: "0 0 8px", fontSize: 13 }}>
+            {checkoutError}
+          </p>
+        ) : null}
+        {checkoutEnabled ? <button
           onClick={async () => {
             setLoading(true);
             try {
@@ -127,8 +142,10 @@ export default function BillingPage() {
               const data = await res.json();
               if (data.checkout_url) {
                 window.location.href = data.checkout_url;
+              } else if (data.error === "billing_checkout_disabled") {
+                setCheckoutEnabled(false);
               } else {
-                alert("Checkout unavailable. Please try again.");
+                setCheckoutError("Checkout is unavailable right now. Contact sales and we will complete the order with you.");
               }
             } finally {
               setLoading(false);
@@ -148,7 +165,7 @@ export default function BillingPage() {
           }}
         >
           {loading ? "Loading…" : "Start checkout for an agreed order"}
-        </button>
+        </button> : null}
       </div>
     </div>
   );

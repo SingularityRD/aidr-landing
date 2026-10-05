@@ -52,6 +52,30 @@ function refFor(snapshot, label) {
   return match[1];
 }
 
+/**
+ * Nonce CSP check (src/proxy.ts): every page response must carry a fresh nonce-based policy without
+ * 'unsafe-inline' in script-src, and every inline <script> in the HTML must carry that response's nonce.
+ * A real browser then exercises the pages below, which only hydrate if the policy lets Next's scripts run.
+ */
+async function assertNonceCsp(path) {
+  const response = await fetch(`${baseUrl}${path}`);
+  const csp = response.headers.get("content-security-policy") ?? "";
+  const scriptSrc = csp.split(";").map((d) => d.trim()).find((d) => d.startsWith("script-src ")) ?? "";
+  const nonce = /'nonce-([^']+)'/.exec(scriptSrc)?.[1];
+  if (!nonce) throw new Error(`${path}: no script nonce in CSP: ${csp}`);
+  if (scriptSrc.includes("'unsafe-inline'")) throw new Error(`${path}: script-src still allows 'unsafe-inline'`);
+  const html = await response.text();
+  const inline = [...html.matchAll(/<script\b([^>]*)>/g)].map((m) => m[1]).filter((attrs) => !/\bsrc=/.test(attrs));
+  const unsigned = inline.filter((attrs) => !attrs.includes(`nonce="${nonce}"`));
+  if (inline.length === 0) throw new Error(`${path}: expected inline bootstrap scripts to be present`);
+  if (unsigned.length > 0) throw new Error(`${path}: ${unsigned.length} inline script(s) without the response nonce`);
+  const again = (await fetch(`${baseUrl}${path}`)).headers.get("content-security-policy") ?? "";
+  if (again === csp) throw new Error(`${path}: nonce was not regenerated per request`);
+  console.log(`CSP ok for ${path}: ${inline.length} inline scripts carry the nonce`);
+}
+
+for (const path of ["/", "/onboarding", "/compare"]) await assertNonceCsp(path);
+
 run(["close"], { allowFail: true, capture: true });
 
 run(["open", `${baseUrl}/onboarding`], { capture: true });

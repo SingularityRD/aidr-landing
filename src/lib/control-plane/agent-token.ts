@@ -69,13 +69,32 @@ export function mintAgentAccessToken(input: {
     exp,
   };
 
+  return { token: signClaims(claims, secret), claims };
+}
+
+function signClaims(claims: AgentTokenClaims, secret: string) {
   const header = { alg: "HS256", typ: "JWT" };
   const encodedHeader = b64urlEncode(JSON.stringify(header));
   const encodedPayload = b64urlEncode(JSON.stringify(claims));
   const signingInput = `${encodedHeader}.${encodedPayload}`;
-  const sig = signHs256(signingInput, secret);
+  return `${signingInput}.${signHs256(signingInput, secret)}`;
+}
 
-  return { token: `${signingInput}.${sig}`, claims };
+/**
+ * Re-sign previously issued claims. HS256 is deterministic, so the control plane
+ * can hand a connector the same credential again (lost enroll response) while
+ * persisting only the non-secret claims, never the token itself.
+ */
+export function reissueAgentAccessToken(claims: AgentTokenClaims, now: Date = new Date()): string {
+  const secret = getAgentTokenSecret();
+  if (!secret) {
+    throw new Error("Missing/weak AIDR_AGENT_TOKEN_SECRET (must be >= 32 chars) for agent token minting.");
+  }
+  if (Math.floor(now.getTime() / 1000) >= claims.exp) throw new Error("token_expired");
+  return signClaims(
+    { uid: claims.uid, agent_id: claims.agent_id, jti: claims.jti, iat: claims.iat, exp: claims.exp },
+    secret,
+  );
 }
 
 export function verifyAgentAccessToken(token: string, now: Date = new Date()): AgentTokenClaims {

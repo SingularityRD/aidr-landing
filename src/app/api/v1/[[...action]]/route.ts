@@ -355,7 +355,7 @@ async function handleEnrollmentTokens(uid: string, method: string, body: Record<
     const plain = `aidr_enroll_${randomBytes(20).toString("hex")}`;
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
     const docRef = collection.doc();
-    await docRef.set({ label: getString(body.label).trim() || null, token_hash: hashSecret(plain), expires_at: expiresAt.toISOString(), consumed_at: null, created_at: FieldValue.serverTimestamp() });
+    await docRef.set({ label: getString(body.label).trim() || null, token_hash: hashSecret(plain), expires_at: expiresAt.toISOString(), expire_at: new Date(expiresAt.getTime() + 7 * 24 * 60 * 60 * 1000), consumed_at: null, created_at: FieldValue.serverTimestamp() });
     return { enrollment_token: plain };
   }
   if (action === "delete") {
@@ -461,8 +461,11 @@ async function handleInstallCode(uid: string, body: Record<string, unknown>) {
 
 // ── Billing (Polar) ─────────────────────────────────────────────────────────
 import { createPolarCheckout } from "@/lib/billing/polar-client";
+import { CHECKOUT_DISABLED_ERROR, isCheckoutEnabled } from "@/lib/billing/checkout-gate";
 
 async function handleBillingCheckout(uid: string, body: Record<string, unknown>) {
+  // Checkout exists only for an explicitly approved order (see lib/billing/checkout-gate.ts).
+  if (!isCheckoutEnabled()) throw new Error(CHECKOUT_DISABLED_ERROR);
   let email = getString(body.email).trim().toLowerCase();
   const seats = Number(body.seats || 1);
   // SECURITY: Never trust priceId from client. Use server-side env only.
@@ -549,6 +552,8 @@ async function dispatchAction(request: NextRequest, action: string, uid: string 
       return handleApiKeys(uid, method, body);
     case "enrollment-tokens":
       return handleEnrollmentTokens(uid, method, body);
+    case "billing-config":
+      return { checkout_enabled: isCheckoutEnabled() };
     case "billing-checkout":
       return handleBillingCheckout(uid, body);
     case "device-deny":
@@ -937,11 +942,12 @@ async function handleRequest(request: NextRequest, context: { params: Promise<{ 
     logger.error({ error: rawMessage, action, uid }, "API action failed");
 
     // In production, never leak internal error details to the client.
-    const knownSafeErrors = ["Unauthorized", "rate_limited:", "missing_", "invalid_", "expired", "agent_seat_limit", "agent_limit_exceeded"];
+    const knownSafeErrors = ["Unauthorized", "rate_limited:", "missing_", "invalid_", "expired", "agent_seat_limit", "agent_limit_exceeded", CHECKOUT_DISABLED_ERROR];
     const isKnownSafe = knownSafeErrors.some((prefix) => rawMessage.startsWith(prefix) || rawMessage === prefix);
     const clientMessage = isProduction && !isKnownSafe ? "Request failed" : rawMessage;
 
-    const status = rawMessage === "Unauthorized" ? 401 : rawMessage.startsWith("rate_limited:") ? 429 : 400;
+    const status =
+      rawMessage === "Unauthorized" ? 401 : rawMessage.startsWith("rate_limited:") ? 429 : rawMessage === CHECKOUT_DISABLED_ERROR ? 403 : 400;
     return json(status, { error: clientMessage });
   }
 }

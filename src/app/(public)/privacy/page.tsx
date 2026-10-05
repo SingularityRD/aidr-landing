@@ -153,14 +153,21 @@ export default function PrivacyPage() {
 
       <DocSection id="retention" title="Retention">
         <p>
-          Final retention periods have not been decided and are one of the items awaiting legal and privacy review. What
-          can be said today:
+          Final retention periods are one of the items awaiting legal and privacy review. The periods below are the ones
+          the service stamps on records today; they are not a contractual commitment.
         </p>
         <ul>
-          <li>Device codes, install codes and enrollment tokens are short-lived and expire automatically.</li>
+          <li>Device codes (15 minutes), install codes (15 minutes) and enrollment tokens (30 minutes) are short-lived.</li>
+          <li>Only a digest of a device code or enrollment token is stored, never the credential itself.</li>
           <li>
-            Control-plane audit entries are stamped to expire after 90 days. Automated deletion of expired entries still
-            has to be switched on by the operator.
+            Event records are stamped to expire after 365 days for blocked or critical events, 180 days for warnings and
+            requests held for approval, and 90 days for the rest. Each event keeps an allow-listed set of fields, with
+            credential-looking strings redacted.
+          </li>
+          <li>Control-plane audit entries are stamped to expire after 90 days.</li>
+          <li>
+            Expired records are removed by database time-to-live policies defined in the repository. They take effect
+            once the operator deploys them to the database, and removal can lag expiry by up to a day or so.
           </li>
           <li>Other dashboard records are kept while the account is active. A deletion schedule is to be defined.</li>
         </ul>

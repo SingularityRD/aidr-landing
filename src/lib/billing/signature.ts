@@ -25,6 +25,10 @@ function getHeader(headers: WebhookHeaderMap, name: string): string {
   return headers[name] ?? headers[name.toLowerCase()] ?? "";
 }
 
+/**
+ * Standard Webhooks verification (HMAC-SHA256 over `id.timestamp.body`, constant-time compare,
+ * 5 minute timestamp tolerance enforced by the library). Anything else is rejected.
+ */
 export function verifyPolarWebhookSignature(input: {
   rawBody: string;
   secret: string;
@@ -53,6 +57,6 @@ export function verifyPolarWebhookSignature(input: {
     }
   }
 
-  const legacySignature = getHeader(input.headers, "x-polar-webhook-signature");
-  return verifyHmacSha256Signature(input.rawBody, legacySignature, secret);
+  // No unsigned/legacy fallback: a signature without id+timestamp has no replay protection.
+  return false;
 }

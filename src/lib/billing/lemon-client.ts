@@ -1,22 +1,17 @@
+import { CHECKOUT_DISABLED_ERROR, isCheckoutApproved } from "./checkout-gate";
 import { verifyHmacSha256Signature } from "./signature";
 
 // Lemon Squeezy API client
 const LEMON_API_KEY = process.env.LEMON_SQUEEZY_API_KEY;
 const LEMON_STORE_ID = process.env.LEMON_SQUEEZY_STORE_ID;
 
-// Pre-created Lemon Squeezy products
-const PRODUCTS = {
-  "agent-seat-monthly": {
-    variantId: process.env.LEMON_SQUEEZY_VARIANT_MONTHLY || "123456", // Lemon Squeezy variant ID
-    price: 2, // $2/month per agent
-    name: "AIDR Agent Seat - Monthly",
-  },
-  "agent-seat-yearly": {
-    variantId: process.env.LEMON_SQUEEZY_VARIANT_YEARLY || "123457",
-    price: 20, // $20/year per agent (2 months free)
-    name: "AIDR Agent Seat - Yearly",
-  },
-};
+// Variant ids come from the approved order's Lemon Squeezy product. There are no defaults and no
+// prices in code: the amount is whatever the approved variant is configured to charge.
+function variantIdFor(plan: "monthly" | "yearly"): string {
+  const id = (plan === "yearly" ? process.env.LEMON_SQUEEZY_VARIANT_YEARLY : process.env.LEMON_SQUEEZY_VARIANT_MONTHLY)?.trim();
+  if (!id) throw new Error(`LEMON_SQUEEZY_VARIANT_${plan.toUpperCase()} is not set`);
+  return id;
+}
 
 export interface CheckoutResult {
   checkoutUrl: string;
@@ -37,7 +32,8 @@ export async function createCheckout(
     throw new Error("LEMON_SQUEEZY_STORE_ID is not set");
   }
 
-  const product = PRODUCTS[`agent-seat-${plan}`];
+  if (!isCheckoutApproved()) throw new Error(CHECKOUT_DISABLED_ERROR);
+  const variantId = variantIdFor(plan);
 
   const response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
     method: "POST",
@@ -69,7 +65,7 @@ export async function createCheckout(
           variant: {
             data: {
               type: "variants",
-              id: product.variantId,
+              id: variantId,
             },
           },
         },
@@ -162,20 +158,4 @@ export function verifyWebhookSignature(
   secret: string
 ): boolean {
   return verifyHmacSha256Signature(payload, signature, secret);
-}
-
-// Pricing utilities
-export const USD_PER_EXTRA_AGENT_PER_MONTH = 5;
-export const USD_PER_EXTRA_AGENT_PER_YEAR = 48; // $4/agent/month billed yearly
-
-export function calculateMonthlyEstimate(agentCount: number): number {
-  // Commercial model: first agent is free, each additional is $5/mo
-  const billable = Math.max(0, agentCount - 1);
-  return billable * USD_PER_EXTRA_AGENT_PER_MONTH;
-}
-
-export function calculateYearlyEstimate(agentCount: number): number {
-  // Yearly billing: $4/agent/month ($48/agent/year)
-  const billable = Math.max(0, agentCount - 1);
-  return billable * USD_PER_EXTRA_AGENT_PER_YEAR;
 }

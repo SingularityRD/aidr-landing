@@ -119,6 +119,9 @@ export async function enforceRateLimit(
 				limit,
 				window_seconds: windowSeconds,
 				reset_at: resetAt,
+				// Counters are meaningless after their window; keep them one extra window for debugging.
+				expires_at: new Date(Date.parse(resetAt) + windowSeconds * 1000).toISOString(),
+				expire_at: new Date(Date.parse(resetAt) + windowSeconds * 1000),
 				created_at: existing.created_at ?? FieldValue.serverTimestamp(),
 				updated_at: FieldValue.serverTimestamp(),
 			},
@@ -167,6 +170,7 @@ export async function reserveIdempotencyKey<T = Record<string, unknown>>(
 			fingerprint,
 			result: input.existingValue ?? null,
 			expires_at: expiresAt,
+			expire_at: new Date(expiresAt),
 			created_at: FieldValue.serverTimestamp(),
 			updated_at: FieldValue.serverTimestamp(),
 		});
@@ -174,6 +178,15 @@ export async function reserveIdempotencyKey<T = Record<string, unknown>>(
 	});
 
 	return result;
+}
+
+/**
+ * Give a reservation back when the guarded work failed, so the sender's retry is
+ * processed instead of being acknowledged as a duplicate of work that never happened.
+ */
+export async function releaseIdempotencyKey(input: { namespace: string; key: string }): Promise<void> {
+	const docId = hashStable({ namespace: input.namespace, key: input.key }).slice(0, 48);
+	await adminDb.collection("control_plane_idempotency").doc(docId).delete();
 }
 
 export async function recordControlPlaneAudit(entry: {
@@ -201,6 +214,7 @@ export async function recordControlPlaneAudit(entry: {
 		user_agent: entry.user_agent ?? null,
 		metadata: entry.metadata ?? {},
 		expires_at: expiresAt,
+		expire_at: new Date(expiresAt),
 		created_at: FieldValue.serverTimestamp(),
 	});
 }

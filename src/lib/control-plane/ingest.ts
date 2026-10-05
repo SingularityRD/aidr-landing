@@ -3,6 +3,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { authenticateAgent, ControlPlaneError } from "./agent-auth";
 import { buildTenantEntitlement, entitlementResponseFragment } from "./entitlement";
 import { exportSecurityEvents, type ExportableEvent } from "./event-export";
+import { projectIngestEvent } from "./event-projection";
 import {
 	enforceRateLimit,
 	hashStable,
@@ -212,9 +213,11 @@ export async function ingestFromRequest(input: {
 
 	for (let index = 0; index < validated.length; index += 1) {
 		const { event, eventId } = validated[index]!;
-		const type = getString(event.type, "event");
-		const verdict = getString(event.verdict, "allow");
-		const severity = getString(event.severity, "info");
+		// Store a server-side allow-list projection, never the raw client JSON.
+		const stored: Record<string, unknown> = { ...projectIngestEvent(event), event_id: eventId };
+		const type = getString(stored.type, "event");
+		const verdict = getString(stored.verdict, "allow");
+		const severity = getString(stored.severity, "info");
 		normalizedEvents.push({
 			event_id: eventId,
 			agent_id: agentId,
@@ -222,7 +225,7 @@ export async function ingestFromRequest(input: {
 			verdict,
 			severity,
 			request_id: requestId,
-			payload: event,
+			payload: stored,
 		});
 		if (existing[index]!.exists) continue; // idempotent resend by the same agent
 		const expiresAt = new Date(
@@ -235,8 +238,10 @@ export async function ingestFromRequest(input: {
 			verdict,
 			severity,
 			request_id: requestId,
-			payload: event,
+			payload: stored,
 			expires_at: expiresAt.toISOString(),
+			// Native timestamp for the Firestore TTL policy (see firebase.json); expires_at stays the ISO string.
+			expire_at: expiresAt,
 			created_at: FieldValue.serverTimestamp(),
 			updated_at: FieldValue.serverTimestamp(),
 		});

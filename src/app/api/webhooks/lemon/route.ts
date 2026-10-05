@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const status =
       message === "invalid_signature" ? 401 :
       message === "missing_user_id" || message === "missing_event_id" ? 400 :
-      message === "billing_webhook_conflict" ? 409 :
+      message === "billing_webhook_conflict" || message === "billing_tenant_mismatch" ? 409 :
       message === "billing_webhook_duplicate" ? 200 :
       400;
     if (message === "billing_webhook_duplicate") {

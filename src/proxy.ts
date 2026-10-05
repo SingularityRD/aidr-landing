@@ -1,7 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { isDemoMode } from "@/lib/demo";
 import { isPublicApiV1Action } from "@/lib/control-plane/api-v1-access";
+import { buildContentSecurityPolicy, generateNonce } from "@/lib/csp";
 
 const isAppRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -18,7 +19,22 @@ const isAppRoute = createRouteMatcher([
 
 const isApiRoute = createRouteMatcher(["/api/v1/(.*)"]);
 
-const demoMiddleware = () => NextResponse.next();
+/**
+ * Next.js reads the nonce from the *request's* CSP header to stamp its inline scripts, so the policy goes on
+ * the forwarded request as well as on the response.
+ */
+function nextWithCsp(request: NextRequest) {
+  const nonce = generateNonce();
+  const csp = buildContentSecurityPolicy({ nonce });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("content-security-policy", csp);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set("content-security-policy", csp);
+  return response;
+}
+
+const demoMiddleware = (request: NextRequest) => nextWithCsp(request);
 
 const protectedMiddleware = clerkMiddleware(async (auth, request) => {
   if (isAppRoute(request)) {
@@ -33,7 +49,7 @@ const protectedMiddleware = clerkMiddleware(async (auth, request) => {
     }
   }
 
-  return NextResponse.next();
+  return nextWithCsp(request);
 });
 
 export default isDemoMode() ? demoMiddleware : protectedMiddleware;

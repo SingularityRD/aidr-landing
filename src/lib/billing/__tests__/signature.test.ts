@@ -64,7 +64,7 @@ describe("verifyPolarWebhookSignature", () => {
     expect(verifyPolarWebhookSignature({ rawBody: payload, secret, headers: signPolar(payload, secret, stale) })).toBe(false);
   });
 
-  it("keeps legacy Polar HMAC fallback guarded against tampering", () => {
+  it("rejects the legacy timestamp-less HMAC header (no replay protection)", () => {
     const payload = JSON.stringify({ type: "subscription.created", data: { id: "sub_123" } });
     const secret = "polar-webhook-secret";
     const signature = signLegacy(payload, secret);
@@ -74,13 +74,6 @@ describe("verifyPolarWebhookSignature", () => {
         rawBody: payload,
         secret,
         headers: { "x-polar-webhook-signature": `sha256=${signature}` },
-      }),
-    ).toBe(true);
-    expect(
-      verifyPolarWebhookSignature({
-        rawBody: JSON.stringify({ type: "subscription.revoked", data: { id: "sub_123" } }),
-        secret,
-        headers: { "x-polar-webhook-signature": signature },
       }),
     ).toBe(false);
   });

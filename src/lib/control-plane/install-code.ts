@@ -73,6 +73,8 @@ export async function createInstallCode(
     email: input.email ?? null,
     created_at: serverTimestamp(),
     expires_at: input.expiresAt.toISOString(),
+    // Native timestamp for the Firestore TTL policy (firestore.indexes.json).
+    expire_at: input.expiresAt,
     used: false,
   });
 }

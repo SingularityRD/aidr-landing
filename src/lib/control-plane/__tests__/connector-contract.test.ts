@@ -18,6 +18,7 @@ import { join, resolve } from "node:path";
 import { NextRequest } from "next/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FakeFirestore } from "./helpers/fake-firestore";
+import { hashDeviceCode } from "../device-secrets";
 
 vi.mock("@/lib/firebase/admin", async () => {
   const { FakeFirestore: Fake } = await import("./helpers/fake-firestore");
@@ -327,8 +328,8 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
     it("expired, denied and unknown device codes are refused with distinct errors", async () => {
       const anon = clientFor("");
       const a = (await anon.deviceStart({ iid: "iid-states-2" })).body as Record<string, string>;
-      db.seed(`device_codes/${a.device_code}`, {
-        ...db.peek(`device_codes/${a.device_code}`)!,
+      db.seed(`device_codes/${hashDeviceCode(a.device_code)}`, {
+        ...db.peek(`device_codes/${hashDeviceCode(a.device_code)}`)!,
         expires_at: new Date(Date.now() - 1000).toISOString(),
       });
       const expired = await anon.devicePoll({ device_code: a.device_code });
@@ -365,7 +366,7 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
         body: JSON.stringify({ iid: "iid-meta", evil: "x".repeat(5000), agent_runtime: "r".repeat(500) }),
       });
       const body = (await res.json()) as { device_code: string };
-      const stored = db.peek(`device_codes/${body.device_code}`)!;
+      const stored = db.peek(`device_codes/${hashDeviceCode(body.device_code)}`)!;
       expect(Object.keys(stored.meta as object).sort()).toEqual(
         ["agent_runtime", "agent_runtime_version", "iid", "ip", "user_agent"].sort(),
       );
@@ -403,9 +404,88 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
       const retry = await clientFor(e.enrollmentToken).enroll({ iid: e.iid });
       expect(retry.ok).toBe(true);
       expect(retry.body?.api_key).toBe(e.apiKey);
-      // ...and the poll keeps handing the token back so a lost enroll response is recoverable.
+      // ...and polling again re-issues a fresh token (only its digest is stored) so a lost
+      // poll response is recoverable; the credential it redeems is still the same one.
       const poll = await clientFor("").devicePoll({ device_code: e.deviceCode });
-      expect(poll.body?.enrollment_token).toBe(e.enrollmentToken);
+      const reissued = String(poll.body?.enrollment_token);
+      expect(reissued).toMatch(/^aidr_enroll_/);
+      expect(reissued).not.toBe(e.enrollmentToken);
+      const again = await clientFor(reissued).enroll({ iid: e.iid });
+      expect(again.body?.api_key).toBe(e.apiKey);
+      // The superseded token no longer redeems.
+      expect(await clientFor(e.enrollmentToken).enroll({ iid: e.iid })).toMatchObject({
+        ok: false,
+        status: 401,
+        error: "invalid_enrollment_token",
+      });
+    });
+
+    it("never stores the device code, enrollment token or access token in plaintext", async () => {
+      const e = await enrollDevice("tenant_enroll_hashonly");
+      const row = db.peek(`device_codes/${hashDeviceCode(e.deviceCode)}`)!;
+      expect(db.peek(`device_codes/${e.deviceCode}`)).toBeUndefined();
+      expect(row.enrollment_token).toBeUndefined();
+      expect(row.access_token).toBeUndefined();
+      expect(row.enrollment_token_hash).toMatch(/^[a-f0-9]{64}$/);
+      const everything = JSON.stringify([...db.docs.entries()]);
+      expect(everything).not.toContain(e.deviceCode);
+      expect(everything).not.toContain(e.enrollmentToken);
+      expect(everything).not.toContain(e.apiKey);
+      expect(row.expire_at).toBeTruthy();
+    });
+
+    it("accepts legacy plaintext device_codes rows, rehashes them and drops the plaintext", async () => {
+      const { mintAgentAccessToken } = await import("../agent-token");
+      const uid = "tenant_legacy";
+      const iid = "iid-legacy-1";
+      const deviceCode = randomBytes(24).toString("hex");
+      const enrollmentToken = `aidr_enroll_${randomBytes(20).toString("hex")}`;
+      const agentId = "aidr_ag_legacyagent000000000001";
+      db.seed(`users/${uid}/agents/${agentId}`, { id: agentId, status: "pending", installation_id: iid });
+      db.seed(`device_codes/${deviceCode}`, {
+        user_code: "LEGA-CY22",
+        status: "authorized",
+        uid,
+        agent_id: agentId,
+        enrollment_token: enrollmentToken,
+        installation_id: iid,
+        meta: { iid },
+        expires_at: new Date(Date.now() + 600_000).toISOString(),
+      });
+      // Enrolling with the plaintext token still works and migrates the row.
+      const enrolled = await clientFor(enrollmentToken).enroll({ iid });
+      expect(enrolled).toMatchObject({ ok: true, body: { agent_id: agentId } });
+      expect(db.peek(`device_codes/${deviceCode}`)).toBeUndefined();
+      const migrated = db.peek(`device_codes/${hashDeviceCode(deviceCode)}`)!;
+      expect(migrated.enrollment_token).toBeUndefined();
+      expect(migrated.access_token).toBeUndefined();
+      expect(JSON.stringify([...db.docs.entries()])).not.toContain(enrollmentToken);
+
+      // A second legacy row, already consumed with a stored access token, is migrated by a device-poll.
+      const code2 = randomBytes(24).toString("hex");
+      const token2 = `aidr_enroll_${randomBytes(20).toString("hex")}`;
+      const access = mintAgentAccessToken({ uid, agent_id: agentId }).token;
+      db.seed(`device_codes/${code2}`, {
+        user_code: "LEGA-CY23",
+        status: "consumed",
+        uid,
+        agent_id: agentId,
+        enrollment_token: token2,
+        access_token: access,
+        installation_id: iid,
+        meta: { iid },
+        expires_at: new Date(Date.now() + 600_000).toISOString(),
+      });
+      const poll = await clientFor("").devicePoll({ device_code: code2 });
+      expect(poll.body).toMatchObject({ ok: true, status: "authorized", enrollment_token: token2 });
+      expect(db.peek(`device_codes/${code2}`)).toBeUndefined();
+      const row2 = db.peek(`device_codes/${hashDeviceCode(code2)}`)!;
+      expect(row2.access_token).toBeUndefined();
+      expect(row2.enrollment_token).toBeUndefined();
+      expect(JSON.stringify([...db.docs.entries()])).not.toContain(access);
+      // The retried enroll re-derives the identical credential from the stored claims.
+      const retry = await clientFor(token2).enroll({ iid });
+      expect(retry.body?.api_key).toBe(access);
     });
 
     it("refuses an unknown token, a missing token, and a token redeemed from another installation", async () => {
@@ -429,8 +509,8 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
       const started = (await anon.deviceStart({ iid })).body as Record<string, string>;
       await approve("tenant_enroll_4", started.user_code);
       const token = String((await anon.devicePoll({ device_code: started.device_code })).body?.enrollment_token);
-      db.seed(`device_codes/${started.device_code}`, {
-        ...db.peek(`device_codes/${started.device_code}`)!,
+      db.seed(`device_codes/${hashDeviceCode(started.device_code)}`, {
+        ...db.peek(`device_codes/${hashDeviceCode(started.device_code)}`)!,
         expires_at: new Date(Date.now() - 1000).toISOString(),
       });
       expect(await clientFor(token).enroll({ iid })).toMatchObject({ ok: false, status: 401, error: "device_code_expired" });
@@ -621,6 +701,41 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
       expect(db.peek(`users/${a.uid}/events/evt-iso-1`)).toMatchObject({ agent_id: a.agentId });
       expect(db.peek(`users/${b.uid}/events/evt-iso-1`)).toBeUndefined();
       expect([...db.docs.keys()].filter((p) => p.startsWith(`users/${b.uid}/events/`))).toEqual([]);
+    });
+
+    it("stores an allow-list projection of each event: unknown fields dropped, secrets redacted, size bounded", async () => {
+      const e = await enrollDevice("tenant_projection");
+      const sent = await rawPost(
+        "ingest",
+        {
+          iid: e.iid,
+          events: [
+            event("evt-proj-1", {
+              tool_name: "Bash",
+              tool_input_summary: "curl -H 'Authorization: Bearer abc123def456' https://u:hunter2@example.test/?token=zzz",
+              prompt: "SECRET PROMPT TEXT",
+              tool_output: "SECRET OUTPUT",
+              api_key: "sk-live-abcdefghijklmnopqrstuvwxyz",
+              reasons: ["password=hunter2"],
+              blob: "x".repeat(100_000),
+            }),
+          ],
+        },
+        e.apiKey,
+      );
+      expect(sent.status).toBe(200);
+      const stored = db.peek(`users/${e.uid}/events/evt-proj-1`)!;
+      expect(stored).toMatchObject({ verdict: "deny", severity: "critical", type: "runtime_verdict" });
+      const payload = stored.payload as Record<string, unknown>;
+      expect(Object.keys(payload).sort()).toEqual(
+        ["event_id", "reasons", "severity", "tool_input_summary", "tool_name", "type", "verdict"].sort(),
+      );
+      const text = JSON.stringify(stored);
+      for (const leaked of ["SECRET PROMPT TEXT", "SECRET OUTPUT", "sk-live-", "abc123def456", "hunter2", "zzz"]) {
+        expect(text).not.toContain(leaked);
+      }
+      expect(Buffer.byteLength(JSON.stringify(payload))).toBeLessThan(16 * 1024);
+      expect(stored.expire_at).toBeTruthy();
     });
 
     it("namespaces idempotency by tenant+agent: another tenant cannot collide with or probe a request id", async () => {
@@ -1106,7 +1221,7 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
       expect(started).toMatchObject({ ok: true, body: { user_code: expect.any(String) } });
       const body = started.body as Record<string, string>;
       // iid reached the server (top-level fields, not only body.meta).
-      expect((db.peek(`device_codes/${body.device_code}`)!.meta as Record<string, unknown>).iid).toBe(iid);
+      expect((db.peek(`device_codes/${hashDeviceCode(body.device_code)}`)!.meta as Record<string, unknown>).iid).toBe(iid);
       await approve("tenant_api_mount", body.user_code);
       const polled = await anon.devicePoll({ device_code: body.device_code });
       expect(polled.body).toMatchObject({ status: "authorized" });

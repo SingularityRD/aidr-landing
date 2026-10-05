@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { GeistPixelSquare, GeistPixelLine } from "geist/font/pixel";
@@ -56,11 +57,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Every page is rendered per request: the CSP nonce (src/proxy.ts) must be stamped onto each response's
+  // inline scripts, which a prerendered page cannot do.
+  await connection();
+
   const enforceProductionKeys =
     process.env.NODE_ENV === "production" &&
     (process.env.AIDR_ENFORCE_PROD_KEYS === "1" || process.env.VERCEL_ENV === "production");
@@ -106,7 +111,7 @@ export default function RootLayout({
   }
 
   return (
-    <ClerkProvider>
+    <ClerkProvider dynamic>
       <ClerkToAuthBridge>{body}</ClerkToAuthBridge>
     </ClerkProvider>
   );
