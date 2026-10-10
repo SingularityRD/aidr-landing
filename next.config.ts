@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
 	// The onboarding smoke test builds a demo-flavoured bundle into its own directory so it can
 	// never overwrite (or be mistaken for) the real production build in .next.
 	distDir: process.env.NEXT_DIST_DIR || ".next",
+	// The container image (Dockerfile) sets NEXT_OUTPUT=standalone so its runner ships only the traced server,
+	// not the full build node_modules. Vercel and the OpenNext/Cloudflare build keep their own defaults.
+	...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" as const } : {}),
 	poweredByHeader: false,
 	async headers() {
 		const headers = [

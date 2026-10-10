@@ -6,8 +6,11 @@
  * what has not been accepted on a real host or by an independent assessor.
  */
 
-/** Source: PRODUCT_SCOPE_AND_FEATURES.md and CLAUDE.md (351 rules across 23 files in threats/). */
-export const DETECTION_RULES = { count: 351, files: 23 } as const;
+/**
+ * Source: threats/*.yaml in the product repository, counted with
+ * `grep -h '^- id:' threats/*.yaml | wc -l` (494 rules across 29 files, matching its CLAUDE.md).
+ */
+export const DETECTION_RULES = { count: 494, files: 29 } as const;
 
 /**
  * Evaluation offer.
