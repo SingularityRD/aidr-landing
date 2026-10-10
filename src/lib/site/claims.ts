@@ -8,9 +8,9 @@
 
 /**
  * Source: threats/*.yaml in the product repository, counted with
- * `grep -h '^- id:' threats/*.yaml | wc -l` (494 rules across 29 files, matching its CLAUDE.md).
+ * `grep -h '^- id:' threats/*.yaml | wc -l` (507 rules across 29 files, matching its CLAUDE.md).
  */
-export const DETECTION_RULES = { count: 494, files: 29 } as const;
+export const DETECTION_RULES = { count: 507, files: 29 } as const;
 
 /**
  * Evaluation offer.
