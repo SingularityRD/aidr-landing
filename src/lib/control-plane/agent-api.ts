@@ -188,21 +188,44 @@ export const policyHandler: Handler = guard(async (request) => {
 });
 
 /**
- * Signed revocation list (`parseSignedRevocationsFromControlPlaneBody` in aidr).
- * Served only to an authenticated, still-enrolled agent, and only when an
- * entitlement signing key is provisioned: an unsigned list would be ignored by a
- * correctly configured connector, so 503 is the honest answer.
+ * Identifier grammar the connector accepts for a revocation list's signed
+ * `tenant_id` / `agent_id` (`REVOCATION_IDENTIFIER` in aidr core `managed.ts`).
+ * A list carrying anything else is rejected outright by the connector.
+ */
+const REVOCATION_IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+
+/**
+ * Signed revocation list, schema 2 (`parseSignedRevocationsFromControlPlaneBody`
+ * in aidr; reference implementation: aidr `supabase/functions/revocations`).
+ *
+ * The signed payload is bound to the tenant it was issued for (`tenant_id`, the
+ * same value as the signed entitlement's `tenant_id`, which is what the connector
+ * compares it against) and to the agent that fetched it.
+ * The connector no longer accepts unbound schema-1 lists, so none are issued.
+ *
+ * Fails closed: served only to an authenticated, still-enrolled agent, only when
+ * an entitlement signing key is provisioned, and only when the tenant id fits the
+ * connector's identifier grammar. An unsigned or unbindable list would be
+ * discarded by the connector, so 503 is the honest answer.
  */
 export const revocationsHandler: Handler = guard(async (request) => {
-  const { uid } = await authenticateAgent({ authorizationHeader: request.headers.get("authorization") });
+  const { uid, agentId } = await authenticateAgent({
+    authorizationHeader: request.headers.get("authorization"),
+  });
   const signing = getEntitlementSigningConfig();
   if (!signing) throw new ControlPlaneError("revocation_signing_unavailable", 503);
+  if (!REVOCATION_IDENTIFIER.test(uid)) {
+    logger.error({ reason: "tenant_id_not_bindable" }, "revocation list cannot be bound to tenant");
+    throw new ControlPlaneError("revocation_binding_unavailable", 503);
+  }
   const entitlement = await buildTenantEntitlement({ uid, db: adminDb });
   const entSnap = await adminDb.collection(`users/${uid}/entitlements`).doc("current").get();
   const serials = entSnap.exists ? (entSnap.data() as Record<string, unknown>).revoked_serials : [];
   const now = new Date();
   const payload = {
-    schema_version: 1 as const,
+    schema_version: 2 as const,
+    tenant_id: uid,
+    agent_id: REVOCATION_IDENTIFIER.test(agentId) ? agentId : null,
     issued_at: now.toISOString(),
     expires_at: new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
     revocation_epoch: entitlement.revocation_epoch,

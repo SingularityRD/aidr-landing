@@ -1196,8 +1196,17 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
       const res = await clientFor(e.apiKey).fetchRevocations();
       expect(res.ok).toBe(true);
       const mod = await import(/* @vite-ignore */ join(AIDR_CORE_SRC, "managed.ts"));
-      const parsed = mod.parseSignedRevocationsFromControlPlaneBody(res.body);
+      // The binding the real connector passes: derived from the verified signed
+      // entitlement it stored at enrollment (`revocationBindingForState(managedState)`).
+      const state = core.applyIngestResult({}, { ok: true, status: 200, body: e.enrollBody }, 72, {
+        authToken: e.apiKey,
+        publicKeysPem: [publicKeyPem],
+      });
+      const binding = mod.revocationBindingForState(state);
+      expect(binding).toEqual({ tenantId: uid });
+      const parsed = mod.parseSignedRevocationsFromControlPlaneBody(res.body, binding);
       expect(parsed).toBeTruthy();
+      expect(parsed.payload).toMatchObject({ schema_version: 2, tenant_id: uid, agent_id: e.agentId });
       expect(
         mod.verifyEd25519SignedRevocationList({ list: parsed.payload, sig_b64: parsed.sig_b64, public_keys_pem: [publicKeyPem] }),
       ).toBe(true);
@@ -1208,6 +1217,35 @@ describe.skipIf(!aidrAvailable)("AIDR connector <-> control-plane contract", () 
       expect(
         mod.verifyEd25519SignedRevocationList({ list: tampered, sig_b64: parsed.sig_b64, public_keys_pem: [publicKeyPem] }),
       ).toBe(false);
+      // A list signed for this tenant is useless to any other runtime, and to one
+      // with no verified tenant.
+      expect(mod.parseSignedRevocationsFromControlPlaneBody(res.body, { tenantId: "tenant-other" })).toBeNull();
+      expect(mod.parseSignedRevocationsFromControlPlaneBody(res.body, { tenantId: null })).toBeNull();
+    });
+
+    it("fails closed (503) instead of issuing a list the connector cannot bind to the tenant", async () => {
+      // A leading "-" is outside the connector's identifier grammar, so any list
+      // bound to this tenant would be discarded by the connector.
+      const e = await enrollDevice("-tenant-rev-unbindable");
+      const res = await rawGet("revocations", e.apiKey);
+      expect(res.status).toBe(503);
+      expect(await res.json()).toEqual({ error: "revocation_binding_unavailable" });
+    });
+
+    it("fails closed (503) instead of serving an unsigned list when no signing key is provisioned", async () => {
+      const e = await enrollDevice("tenant_rev_unsigned");
+      const keyId = process.env.AIDR_ENTITLEMENT_SIGNING_KEY_ID;
+      const pkcs8 = process.env.AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64;
+      delete process.env.AIDR_ENTITLEMENT_SIGNING_KEY_ID;
+      delete process.env.AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64;
+      try {
+        const res = await rawGet("revocations", e.apiKey);
+        expect(res.status).toBe(503);
+        expect(await res.json()).toEqual({ error: "revocation_signing_unavailable" });
+      } finally {
+        process.env.AIDR_ENTITLEMENT_SIGNING_KEY_ID = keyId;
+        process.env.AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64 = pkcs8;
+      }
     });
   });
 

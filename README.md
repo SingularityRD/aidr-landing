@@ -62,7 +62,7 @@ Set these in `.env.local` for Clerk + Firestore:
 - `AIDR_POLICY_SIGNING_SECRET` (>= 32 chars, legacy HMAC over the policy version; connectors cannot verify it)
 - `AIDR_POLICY_SIGNING_KEY_ID` + `AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64` (Ed25519 PKCS#8 DER, base64; set both or neither): signs `GET /v1/policy` as `policy_signed` so connectors holding the public key (`control_plane.policy_public_keys_pem`) can verify it. A dedicated key is recommended; when unset the entitlement key below is reused; with neither the policy is served unsigned.
 - `AIDR_POLICY_SIGNATURE_TTL_HOURS` (optional, 1-720, default 24): how long a signed policy response stays acceptable to a connector (also caps offline-grace use)
-- `AIDR_ENTITLEMENT_SIGNING_KEY_ID` + `AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64` (Ed25519, same format): signs entitlement snapshots for `licensing.public_keys_pem`
+- `AIDR_ENTITLEMENT_SIGNING_KEY_ID` + `AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64` (Ed25519, same format): signs entitlement snapshots for `licensing.public_keys_pem`, and the tenant/agent-bound schema-2 revocation list served at `GET /v1/revocations` (unset: that endpoint answers 503 rather than an unsigned list)
 
 Generate a signing key pair (publish only the public key to connectors):
 
