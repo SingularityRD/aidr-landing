@@ -1,6 +1,7 @@
 node_modules
 .next
 .next-smoke
+.open-next
 .git
 .gitignore
 .env
