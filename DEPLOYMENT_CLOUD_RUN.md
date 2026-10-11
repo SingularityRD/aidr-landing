@@ -42,6 +42,21 @@ docker build -t "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE:latest" .
 docker push "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE:latest"
 ```
 
+Image layout (see `Dockerfile`):
+
+- Every stage uses the same digest-pinned `node:24.21.0-alpine3.24` base. pnpm comes from
+  `packageManager` through corepack in the build stages only.
+- The build sets `NEXT_OUTPUT=standalone`, so the runner holds only the traced Next.js server,
+  `.next/static` and `public/`. npm, npx, corepack and yarn are removed from the runner.
+- The runner runs as the non-root `node` user (uid 1000) with `CMD ["node", "server.js"]`. It
+  listens on `PORT` (default 8080) and `HOSTNAME` (default `0.0.0.0`).
+- `NEXT_PUBLIC_*` values are inlined at build time; pass them with `--build-arg`. Secrets are
+  runtime environment variables only.
+- With a read-only root filesystem, mount writable tmpfs at `/tmp` and `/app/.next/cache`, for example:
+  `docker run --read-only --tmpfs /tmp --tmpfs /app/.next/cache:uid=1000,gid=1000 --cap-drop ALL --security-opt no-new-privileges:true ...`
+- `HEALTHCHECK` probes `/api/health` (liveness). Point readiness probes at `/api/ready`, which
+  returns 503 with per-check reason codes until the required dependencies are configured and reachable.
+
 ## 3) Required Environment Variables
 
 ### Required (auth + control plane)
