@@ -1,0 +1,21 @@
+{
+  "format": "aidr-license-v1",
+  "key_id": "vector-2026",
+  "payload": {
+    "license_id": "LIC-bilgem-20261001-ab12",
+    "customer": "TÜBİTAK BİLGEM",
+    "customer_id": "bilgem",
+    "plan_id": "enterprise",
+    "seats": 250,
+    "features": [
+      "premium_intel",
+      "offline_packs"
+    ],
+    "deployment": "airgap",
+    "issued_at": "2026-10-01T00:00:00Z",
+    "not_before": "2026-10-01T00:00:00Z",
+    "expires_at": "2027-10-01T00:00:00Z",
+    "grace_days": 30
+  },
+  "sig": "e8MrqgCpCiCBttBomqBbsMEIflRU0SBe7b5vzdVPjHzDnH8Efrzul4V09kFwxVKcmeWDRfx2+CIubIrX/ImRCg=="
+}

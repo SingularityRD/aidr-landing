@@ -39,6 +39,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Vendor admin panel (src/lib/vendor-admin): customer terms, signed licenses, audit. Server only.
+    match /vendor_customers/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /vendor_admin_audit/{document=**} {
+      allow read, write: if false;
+    }
+
     match /install_codes/{document=**} {
       allow read, write: if false;
     }

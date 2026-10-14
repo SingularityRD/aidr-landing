@@ -66,6 +66,11 @@ const optionalEnvVars = [
   'AIDR_POLICY_SIGNATURE_TTL_HOURS',
   'AIDR_ENTITLEMENT_SIGNING_KEY_ID',
   'AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64',
+  // Vendor admin panel (/admin, README "Vendor admin panel").
+  'AIDR_VENDOR_ADMIN_USER_IDS',
+  'AIDR_LICENSE_SIGNING_KEY_ID',
+  'AIDR_LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64',
+  'AIDR_GITHUB_DISPATCH_TOKEN',
   'SENTRY_AUTH_TOKEN',
   'SENTRY_DSN',
 ];
@@ -92,6 +97,7 @@ function checkSigningKeys() {
   for (const [idVar, keyVar] of [
     ['AIDR_POLICY_SIGNING_KEY_ID', 'AIDR_POLICY_SIGNING_PRIVATE_KEY_PKCS8_B64'],
     ['AIDR_ENTITLEMENT_SIGNING_KEY_ID', 'AIDR_ENTITLEMENT_SIGNING_PRIVATE_KEY_PKCS8_B64'],
+    ['AIDR_LICENSE_SIGNING_KEY_ID', 'AIDR_LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64'],
   ]) {
     const id = (process.env[idVar] || '').trim();
     const key = (process.env[keyVar] || '').trim();

@@ -16,9 +16,12 @@ const isAppRoute = createRouteMatcher([
   "/api-keys(.*)",
   "/settings(.*)",
   "/onboarding(.*)",
+  // Vendor admin panel: signed in here, then src/lib/vendor-admin/access.ts decides.
+  "/admin(.*)",
 ]);
 
 const isApiRoute = createRouteMatcher(["/api/v1/(.*)"]);
+const isAdminApiRoute = createRouteMatcher(["/api/admin/(.*)"]);
 
 /**
  * Next.js reads the nonce from the *request's* CSP header to stamp its inline scripts, so the policy goes on
@@ -45,6 +48,7 @@ const unconfiguredMiddleware = (request: NextRequest) => {
   const path = request.nextUrl.pathname;
   const needsIdentity =
     isAppRoute(request) ||
+    isAdminApiRoute(request) ||
     (isApiRoute(request) && !isPublicApiV1Action(path.split("/")[3] || ""));
   if (needsIdentity) {
     return NextResponse.json(
@@ -56,7 +60,7 @@ const unconfiguredMiddleware = (request: NextRequest) => {
 };
 
 const protectedMiddleware = clerkMiddleware(async (auth, request) => {
-  if (isAppRoute(request)) {
+  if (isAppRoute(request) || isAdminApiRoute(request)) {
     await auth.protect();
   }
 
