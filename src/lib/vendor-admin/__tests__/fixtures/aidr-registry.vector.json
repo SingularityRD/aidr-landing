@@ -1,0 +1,1 @@
+{"format":"aidr-license-public-keys-v1","schema_version":1,"keys":[{"key_id":"vector-2026","algorithm":"ed25519","public_key_pem":"-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAjJ1HlN2MwyYjgYjUeuonjZ/8lrvcc/r0m774j3Na3io=\n-----END PUBLIC KEY-----\n","not_before":"2026-01-01T00:00:00Z","not_after":null,"status":"active"}]}

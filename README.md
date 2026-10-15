@@ -120,6 +120,45 @@ Internal scheduler:
   configured.
 
 
+## Vendor admin panel
+
+`/admin` is Singularity's internal console for on-prem / air-gapped customer
+companies: company name, device limit, license term, plan and the company's own
+AIDR server address. From a company's terms it signs an `aidr-license-v1`
+license and an `aidr-customer-packet-v1` customer packet (the files the AIDR
+product verifies; byte-compatible with the AIDR repository's
+`scripts/license-issue.mjs` and `scripts/customer-packet-issue.mjs`), offers both
+for download, and starts the per-customer installer build (Windows MSI/EXE,
+Linux deb/rpm/tar.gz) in the AIDR repository's `customer-installer.yml`.
+
+The device limit is the license's `seats`: the customer's own AIDR server
+refuses enrolling computers beyond it. Changing a company's terms never changes
+a license already delivered; issue a new license and deliver new installers.
+
+Access (fails closed; anyone else gets a 404):
+
+- `AIDR_VENDOR_ADMIN_USER_IDS`: comma-separated Clerk user ids (`user_…`) of the staff allowed in.
+- Those users must have two-step verification on, and the session must have
+  passed it within `AIDR_VENDOR_ADMIN_MAX_2FA_AGE_MINUTES` (default 720).
+- Off in demo mode, without Clerk, or when Firebase Admin is not configured.
+
+Signing and builds:
+
+- `AIDR_LICENSE_SIGNING_KEY_ID` + `AIDR_LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64`
+  (Ed25519 PKCS#8 DER, base64; generate as above). This key can mint customer
+  licenses: keep it only in the production secret store, use a dedicated key,
+  and rotate it if this deployment is ever compromised. Its public half must be
+  in the AIDR repository's `deploy/onprem/license-public-keys.json` (the panel
+  shows the exact entry under "show the public key"), or every endpoint refuses
+  what is signed here.
+- `AIDR_GITHUB_DISPATCH_TOKEN`: fine-grained GitHub token with Actions read and
+  write on the AIDR repository only. Optional `AIDR_GITHUB_REPOSITORY` (default
+  `SingularityRD/aidr`) and `AIDR_GITHUB_WORKFLOW_REF` (default `master`).
+
+Data (server only; `firestore.rules` denies clients): `vendor_customers/{id}`,
+`vendor_customers/{id}/issuances/{license_id}` (each signed license and packet,
+and the builds requested from it) and `vendor_admin_audit` (every action, kept).
+
 ## Public Website and Procurement Pages
 
 The public pages (`/`, `/pricing`, `/pilot`, `/enterprise`, `/install`, `/security`, `/trust`,
