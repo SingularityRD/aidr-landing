@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/admin";
+import { adminDb, firebaseAdminEnvError } from "@/lib/firebase/admin";
 import { logger } from "@/lib/logger";
 import { hashStable, releaseIdempotencyKey, reserveIdempotencyKey } from "@/lib/control-plane/request-guard";
 import { verifyPolarWebhookSignature } from "@/lib/billing/signature";
@@ -39,6 +39,10 @@ function json(status: number, body: unknown) {
  *    the first tenant that claimed it.
  */
 export async function POST(request: NextRequest) {
+  // Never acknowledge a billing event that cannot be stored: 503 makes the provider retry it later.
+  if (firebaseAdminEnvError) {
+    return NextResponse.json({ error: "billing_backend_unavailable" }, { status: 503, headers: { "Retry-After": "300" } });
+  }
   const secret = process.env.POLAR_WEBHOOK_SECRET?.trim() || "";
   if (!secret) return json(500, { error: "Missing Polar webhook secret" });
 

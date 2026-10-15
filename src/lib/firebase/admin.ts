@@ -113,6 +113,30 @@ function createMockAuth(): Auth {
   } as unknown as Auth;
 }
 
+export class FirebaseAdminUnavailableError extends Error {
+  readonly code = "firebase_admin_unavailable";
+  constructor(reason: string) {
+    super(`Firebase Admin is not available: ${reason}`);
+    this.name = "FirebaseAdminUnavailableError";
+  }
+}
+
+/**
+ * Outside demo mode an unconfigured backend must fail closed. The in-memory mocks above are for demo/E2E
+ * only: in production they would accept writes that vanish (a signed billing webhook acknowledged into
+ * memory, rate limits that never persist) and `verifyIdToken` would accept any token as the demo user.
+ * Every property access on the returned object throws instead.
+ */
+export function createUnavailableService<T extends object>(reason: string): T {
+  return new Proxy({} as T, {
+    get(_target, property) {
+      // Not a thenable, and safe for inspection by loggers and test runners.
+      if (property === "then" || typeof property === "symbol") return undefined;
+      throw new FirebaseAdminUnavailableError(reason);
+    },
+  });
+}
+
 let adminAuth: Auth;
 let adminDb: Firestore;
 let firebaseAdminEnvError: string | null;
@@ -125,10 +149,10 @@ if (isDemoMode()) {
   const serviceAccount = getServiceAccountConfig();
   const hasServiceAccount = hasServiceAccountConfig(serviceAccount);
 
-  let shouldUseMockServices = false;
+  let backendUnavailable = false;
   if (!hasServiceAccount) {
     firebaseAdminEnvError = "Missing FIREBASE_PROJECT_ID / FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY for server-side Firebase Admin.";
-    shouldUseMockServices = true;
+    backendUnavailable = true;
   } else {
     try {
       if (!getApps().length) {
@@ -144,13 +168,13 @@ if (isDemoMode()) {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       firebaseAdminEnvError = `Firebase Admin initialization failed: ${message}`;
-      shouldUseMockServices = true;
+      backendUnavailable = true;
     }
   }
 
-  if (shouldUseMockServices) {
-    adminAuth = createMockAuth();
-    adminDb = createMockFirestore();
+  if (backendUnavailable) {
+    adminAuth = createUnavailableService<Auth>("credentials_missing_or_invalid");
+    adminDb = createUnavailableService<Firestore>("credentials_missing_or_invalid");
   } else {
     adminAuth = getAuth();
     adminDb = getFirestore();
