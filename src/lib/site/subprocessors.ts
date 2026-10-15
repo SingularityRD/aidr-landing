@@ -58,12 +58,12 @@ export const SUBPROCESSORS: Subprocessor[] = [
   },
   {
     name: "Application hosting and edge network",
-    entity: "To be confirmed (the repository contains deployment targets for Vercel, Google Cloud Run and Cloudflare Workers)",
+    entity: "Vercel Inc. (this site is served by Vercel; the repository also contains Google Cloud Run and Cloudflare Workers targets that are not in use)",
     purpose: "Serving the website and API, TLS termination and request routing.",
     data: "Request metadata (IP address, user agent, URL), and the content of requests to the application.",
     trigger: "Every request.",
-    location: NOT_CONFIRMED,
-    status: "To be confirmed",
+    location: "Observed on 2026-10-15: server functions run in Vercel's Washington, D.C. (iad1) region behind its global edge network. Not a residency commitment.",
+    status: "In use",
   },
   {
     name: "Cloudflare Turnstile",
