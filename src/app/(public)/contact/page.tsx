@@ -22,9 +22,10 @@ export default async function ContactPage({
   const topic = (CONTACT_TOPICS as readonly string[]).includes(requested ?? "") ? (requested as ContactTopic) : undefined;
   // Never show a form whose submissions cannot be delivered (the API answers 503 contact_unavailable).
   const formConnected = Boolean(getContactDestination());
-  const mailboxes = (["sales", "security", "privacy"] as const)
-    .map((channel) => [channel, getContactEmail(channel)] as const)
-    .filter((entry): entry is readonly [ContactChannel, string] => Boolean(entry[1]));
+  const mailboxes = (["sales", "security", "privacy"] as const satisfies readonly ContactChannel[]).flatMap((channel) => {
+    const email = getContactEmail(channel);
+    return email ? [[channel, email] as const] : [];
+  });
   const fallbackEmail = getContactEmail(topic === "security" || topic === "privacy" ? topic : "sales");
 
   return (
