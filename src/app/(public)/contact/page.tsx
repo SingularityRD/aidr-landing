@@ -2,7 +2,8 @@ import Link from "next/link";
 import ContactForm from "@/components/site/ContactForm";
 import { ContactLink } from "@/components/site/ContactLink";
 import { Callout, DocHeader, DocSection } from "@/components/site/Doc";
-import { CONTACT_TOPICS, type ContactTopic } from "@/lib/site/contact";
+import { getContactEmail, type ContactChannel } from "@/lib/site/config";
+import { CONTACT_TOPICS, getContactDestination, type ContactTopic } from "@/lib/site/contact";
 import { pageMetadata } from "@/lib/site/metadata";
 
 export const metadata = pageMetadata({
@@ -19,6 +20,12 @@ export default async function ContactPage({
   const params = await searchParams;
   const requested = Array.isArray(params.topic) ? params.topic[0] : params.topic;
   const topic = (CONTACT_TOPICS as readonly string[]).includes(requested ?? "") ? (requested as ContactTopic) : undefined;
+  // Never show a form whose submissions cannot be delivered (the API answers 503 contact_unavailable).
+  const formConnected = Boolean(getContactDestination());
+  const mailboxes = (["sales", "security", "privacy"] as const)
+    .map((channel) => [channel, getContactEmail(channel)] as const)
+    .filter((entry): entry is readonly [ContactChannel, string] => Boolean(entry[1]));
+  const fallbackEmail = getContactEmail(topic === "security" || topic === "privacy" ? topic : "sales");
 
   return (
     <>
@@ -29,7 +36,27 @@ export default async function ContactPage({
       />
 
       <DocSection title="Send a message">
-        <ContactForm initialTopic={topic} />
+        {formConnected ? (
+          <ContactForm initialTopic={topic} fallbackEmail={fallbackEmail ?? undefined} />
+        ) : (
+          <Callout tone="warn" title="The contact form is not connected on this deployment.">
+            Messages cannot be delivered from this page yet, so the form is not shown.{" "}
+            {mailboxes.length > 0 ? (
+              <>
+                Please write to{" "}
+                {mailboxes.map(([label, email], index) => (
+                  <span key={label}>
+                    {index > 0 ? (index === mailboxes.length - 1 ? " or " : ", ") : null}
+                    <a href={`mailto:${email}`}>{email}</a> ({label})
+                  </span>
+                ))}
+                .
+              </>
+            ) : (
+              <>No monitored mailbox is configured either. Please try again later.</>
+            )}
+          </Callout>
+        )}
       </DocSection>
 
       <DocSection title="Other routes">

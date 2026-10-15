@@ -65,16 +65,39 @@ describe("public pages render real content", () => {
   }
 
   it("/contact renders the form with labelled fields, a honeypot and a consent checkbox", async () => {
-    const { default: ContactPage } = await import("@/app/(public)/contact/page");
-    const element = await ContactPage({ searchParams: Promise.resolve({ topic: "pilot" }) });
-    const html = renderToStaticMarkup(element);
-    expect(html).toMatch(/<h1[^>]*>Talk to us/);
-    expect(html).toContain('name="website"');
-    expect(html).toMatch(/<label[^>]*>Work email<\/label>/);
-    expect(html).toContain('type="checkbox"');
-    expect(html).toMatch(/<option value="pilot" selected/);
-    // No mailbox is shown unless the owner configures one.
-    expect(html).not.toMatch(/mailto:/);
+    vi.stubEnv("CONTACT_WEBHOOK_URL", "https://hooks.example/intake");
+    try {
+      const { default: ContactPage } = await import("@/app/(public)/contact/page");
+      const element = await ContactPage({ searchParams: Promise.resolve({ topic: "pilot" }) });
+      const html = renderToStaticMarkup(element);
+      expect(html).toMatch(/<h1[^>]*>Talk to us/);
+      expect(html).toContain('name="website"');
+      expect(html).toMatch(/<label[^>]*>Work email<\/label>/);
+      expect(html).toContain('type="checkbox"');
+      expect(html).toMatch(/<option value="pilot" selected/);
+      // No mailbox is shown unless the owner configures one.
+      expect(html).not.toMatch(/mailto:/);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("/contact does not show a form that cannot deliver, and offers configured mailboxes instead", async () => {
+    vi.stubEnv("CONTACT_WEBHOOK_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_CONTACT_SALES_EMAIL", "sales@example.com");
+    try {
+      const { default: ContactPage } = await import("@/app/(public)/contact/page");
+      const html = renderToStaticMarkup(await ContactPage({ searchParams: Promise.resolve({}) }));
+      expect(html).toMatch(/contact form is not connected/);
+      expect(html).not.toContain('name="website"');
+      expect(html).toContain('href="mailto:sales@example.com"');
+      vi.stubEnv("NEXT_PUBLIC_CONTACT_SALES_EMAIL", "");
+      const bare = renderToStaticMarkup(await ContactPage({ searchParams: Promise.resolve({}) }));
+      expect(bare).toMatch(/No monitored mailbox is configured/);
+      expect(bare).not.toMatch(/mailto:/);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
 

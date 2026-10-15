@@ -20,7 +20,14 @@ type SubmitState =
   | { kind: "sent" }
   | { kind: "error"; message: string };
 
-export default function ContactForm({ initialTopic }: { initialTopic?: ContactTopic }) {
+export default function ContactForm({
+  initialTopic,
+  fallbackEmail,
+}: {
+  initialTopic?: ContactTopic;
+  /** A monitored mailbox offered when a submission fails, so a failed form is never a dead end. */
+  fallbackEmail?: string;
+}) {
   const id = useId();
   const [errors, setErrors] = useState<ContactErrors>({});
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
@@ -250,7 +257,17 @@ export default function ContactForm({ initialTopic }: { initialTopic?: ContactTo
       </div>
 
       <div role="status" aria-live="polite" style={{ marginTop: 12, minHeight: 20 }}>
-        {state.kind === "error" ? <span className="field-error">{state.message}</span> : null}
+        {state.kind === "error" ? (
+          <span className="field-error">
+            {state.message}
+            {fallbackEmail ? (
+              <>
+                {" "}
+                You can also write to <a href={`mailto:${fallbackEmail}`}>{fallbackEmail}</a>.
+              </>
+            ) : null}
+          </span>
+        ) : null}
       </div>
     </form>
   );
