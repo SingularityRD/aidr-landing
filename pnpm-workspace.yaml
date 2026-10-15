@@ -1,3 +1,11 @@
+# A flat (npm-style) node_modules. Turbopack loads server external packages (firebase-admin, pino)
+# through `.next/node_modules/<pkg>-<hash>` links. With pnpm's isolated layout a package's own
+# dependencies live only as siblings inside node_modules/.pnpm, so a deployment that copies those
+# links as directories (instead of preserving them) cannot resolve them and every route that loads
+# firebase-admin or pino fails with an empty 500. A flat layout keeps them resolvable from
+# /node_modules either way. scripts/verify-server-bundle.mjs enforces this after every build.
+nodeLinker: hoisted
+
 overrides:
   '@fastify/busboy@<3.2.1': ^3.2.1
   '@grpc/grpc-js@<1.14.5': ^1.14.5

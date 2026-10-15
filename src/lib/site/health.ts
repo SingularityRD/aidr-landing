@@ -1,6 +1,8 @@
-import { adminDb, firebaseAdminEnvError } from "@/lib/firebase/admin";
 import { isDemoMode } from "@/lib/demo";
 import { getContactDestination } from "./contact";
+import { SERVICE, release } from "./liveness";
+
+export { getLiveness, type Liveness } from "./liveness";
 
 export type CheckStatus = "ok" | "fail" | "not_configured" | "skipped";
 
@@ -13,14 +15,6 @@ export type CheckResult = {
   reason?: string;
 };
 
-export type Liveness = {
-  status: "ok";
-  service: string;
-  release: string;
-  time: string;
-  uptimeSeconds: number;
-};
-
 export type Readiness = {
   status: "ready" | "not_ready";
   service: string;
@@ -29,27 +23,7 @@ export type Readiness = {
   checks: Record<string, CheckResult>;
 };
 
-const SERVICE = "aidr-landing";
 const PROBE_TIMEOUT_MS = 2500;
-
-function release(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_VERSION?.trim() ||
-    process.env.VERCEL_GIT_COMMIT_SHA?.trim() ||
-    process.env.GIT_COMMIT_SHA?.trim() ||
-    "unknown"
-  );
-}
-
-export function getLiveness(): Liveness {
-  return {
-    status: "ok",
-    service: SERVICE,
-    release: release(),
-    time: new Date().toISOString(),
-    uptimeSeconds: Math.round(process.uptime()),
-  };
-}
 
 async function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -89,6 +63,16 @@ export function clerkFrontendHost(publishableKey: string | undefined): string | 
 
 async function checkDatabase(): Promise<CheckResult> {
   if (isDemoMode()) return { status: "skipped", required: false, reason: "demo_mode" };
+  // Loaded lazily: if the Firebase Admin SDK cannot be loaded in this deployment (missing or unresolvable
+  // files in the server bundle), readiness reports it as a failed check instead of the whole endpoint
+  // (and /status) failing with an opaque 500.
+  let admin: typeof import("@/lib/firebase/admin");
+  try {
+    admin = await import("@/lib/firebase/admin");
+  } catch {
+    return { status: "fail", required: true, reason: "sdk_load_failed" };
+  }
+  const { adminDb, firebaseAdminEnvError } = admin;
   if (firebaseAdminEnvError) return { status: "not_configured", required: true, reason: "credentials_missing" };
   return timed(true, async () => {
     // A real round trip to Firestore; the document does not need to exist.

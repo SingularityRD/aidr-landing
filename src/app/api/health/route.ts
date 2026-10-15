@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getLiveness } from "@/lib/site/health";
+// Only the dependency-free liveness module: see src/lib/site/liveness.ts.
+import { getLiveness } from "@/lib/site/liveness";
 
 export const dynamic = "force-dynamic";
 
