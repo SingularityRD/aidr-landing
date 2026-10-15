@@ -131,6 +131,13 @@ describe("honest assurance and offer statements", () => {
     expect(html).toMatch(/Single sign-on \(SSO\)/);
     expect(html).toMatch(/SCIM/);
     expect(html).toMatch(/Air-gapped operation/);
+    // Capabilities added to the product on 2026-10-13..15, each with its open acceptance stated.
+    expect(html).toMatch(/Fleet enrollment for mass deployment/);
+    expect(html).toMatch(/Per-customer signed installers/);
+    expect(html).toMatch(/no code-signing certificate has been issued yet/);
+    expect(html).toMatch(/Browser Guard/);
+    expect(html).toMatch(/just-in-time provisioning/);
+    expect(html).toMatch(/Splunk HEC/);
   });
 
   it("/install lists all six connectors with their limits and real-host acceptance state", async () => {
