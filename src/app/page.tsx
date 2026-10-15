@@ -2,7 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import PageShell from "@/components/site/PageShell";
 import HeroCtas from "@/components/site/HeroCtas";
-import { CONNECTORS, DETECTION_RULES, EVALUATION, HOST_ACCEPTANCE_STATEMENT, PRICING_STATEMENT } from "@/lib/site/claims";
+import {
+  CONNECTORS,
+  CONNECTOR_SCOPE_STATEMENT,
+  DETECTION_RULES,
+  EVALUATION,
+  HOST_ACCEPTANCE_STATEMENT,
+  PRICING_STATEMENT,
+} from "@/lib/site/claims";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -73,7 +80,7 @@ const faqs = [
   },
   {
     q: "Which agents does it support?",
-    a: "The intended first-release scope is Claude Code, Cursor, VS Code, OpenClaw and OpenCode. Each connector has documented limits, and real-host acceptance is not yet complete for any of them. See the install page.",
+    a: `${CONNECTOR_SCOPE_STATEMENT} Each connector has documented limits. ${HOST_ACCEPTANCE_STATEMENT} See the install page.`,
   },
   {
     q: "Can an agent get around it?",
@@ -146,8 +153,9 @@ export default function Home() {
       </section>
 
       <div className="callout callout-info" role="note" style={{ marginTop: 24 }}>
-        <strong>Where this stands.</strong> AIDR is in controlled evaluation. Real-host acceptance is not complete for any
-        connector, there is no independent security assessment or certification yet, and there is no SLA. The{" "}
+        <strong>Where this stands.</strong> AIDR is in controlled evaluation and no release has been cut. Real-host acceptance
+        covers one host version on Linux x64 for four connectors and none for Cursor or VS Code, there is no independent
+        security assessment or certification yet, and there is no SLA. The{" "}
         <Link href="/trust">trust center</Link> lists what is verified and what is open.
       </div>
 

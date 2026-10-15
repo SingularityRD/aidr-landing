@@ -51,7 +51,7 @@ export const TRUST_ITEMS: TrustItem[] = [
     area: "Real-host connector acceptance",
     status: "Open",
     detail:
-      "Connectors are tested against the product code and mocked host contracts. Acceptance on real, licensed hosts for each operating system is not complete (COM-010).",
+      "Claude Code, Codex CLI, OpenClaw and OpenCode each have one real-host acceptance record (one host version, Linux x64, development build, scripted model). Cursor and VS Code have none. Acceptance on Windows, macOS, arm64, other host versions and a released build is not complete (COM-010).",
   },
   {
     area: "Secure development practices",
