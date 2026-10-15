@@ -31,7 +31,7 @@ export default function InstallPage() {
         lead="Each connector hooks into one agent host. Release artifacts are signed and distributed to approved evaluation and customer accounts; they are not public downloads."
       />
 
-      <Callout tone="warn" title="Real-host acceptance is not complete.">
+      <Callout tone="warn" title="Real-host acceptance is limited.">
         {CONNECTOR_SCOPE_STATEMENT} {HOST_ACCEPTANCE_STATEMENT}
       </Callout>
 
@@ -52,6 +52,9 @@ export default function InstallPage() {
       {CONNECTORS.map((connector) => (
         <DocSection key={connector.id} id={connector.id} title={connector.name}>
           <p>
+            <strong>Acceptance:</strong> {connector.acceptance.summary}
+          </p>
+          <p>
             <strong>Interception:</strong> {connector.interception}.
           </p>
           <p>
@@ -69,6 +72,18 @@ export default function InstallPage() {
 
 // ~/.config/opencode/opencode.json
 { "plugin": ["@singularityrd/aidr-opencode"] }`}</pre>
+          ) : null}
+          {connector.id === "codex" ? (
+            <pre aria-label="Codex CLI hook configuration">{`npm install --global @singularityrd/aidr-codex@VERSION
+
+# ~/.codex/config.toml
+[[hooks.PreToolUse]]
+matcher = "^(Bash|apply_patch|mcp__.+)$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "aidr-codex-hook"
+timeout = 10`}</pre>
           ) : null}
           {connector.id === "vscode" ? (
             <p>

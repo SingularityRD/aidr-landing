@@ -42,6 +42,7 @@ function registryPatterns(): Array<{ id: string; pattern: RegExp }> {
   const candidates = [
     process.env.AIDR_CLAIM_REGISTRY,
     `${REPO_ROOT}/../aidr/docs/production-readiness/commercial-go-evidence-registry.json`,
+    `${REPO_ROOT}/../aidr-restored/docs/production-readiness/commercial-go-evidence-registry.json`,
   ].filter(Boolean) as string[];
   for (const candidate of candidates) {
     if (!existsSync(candidate)) continue;

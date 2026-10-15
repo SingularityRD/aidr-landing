@@ -133,11 +133,14 @@ describe("honest assurance and offer statements", () => {
     expect(html).toMatch(/Air-gapped operation/);
   });
 
-  it("/install lists known limits for all five connectors and not for Codex", async () => {
+  it("/install lists all six connectors with their limits and real-host acceptance state", async () => {
     const html = await render(PAGES.find((p) => p.path === "/install")!);
-    for (const name of ["Claude Code", "Cursor", "VS Code", "OpenClaw", "OpenCode"]) expect(html).toContain(name);
+    for (const name of ["Claude Code", "Codex CLI", "Cursor", "VS Code", "OpenClaw", "OpenCode"]) expect(html).toContain(name);
     expect(html).toContain("Known limits");
-    expect(html).toMatch(/Real-host acceptance is not complete/);
+    expect(html).toMatch(/Real-host acceptance is limited/);
+    // Cursor and VS Code must carry the preview marker wherever they are sold.
+    expect(html.match(/Preview: no real-host acceptance evidence yet/g)?.length).toBe(2);
+    expect(html).toMatch(/no macOS installer is offered/);
   });
 
   it("/security lists the real subprocessors", async () => {

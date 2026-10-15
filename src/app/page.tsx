@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import PageShell from "@/components/site/PageShell";
 import HeroCtas from "@/components/site/HeroCtas";
-import { CONNECTORS, DETECTION_RULES, EVALUATION, PRICING_STATEMENT } from "@/lib/site/claims";
+import { CONNECTORS, DETECTION_RULES, EVALUATION, HOST_ACCEPTANCE_STATEMENT, PRICING_STATEMENT } from "@/lib/site/claims";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -207,16 +207,18 @@ export default function Home() {
 
       <section id="platforms" className="doc-section" aria-labelledby="platforms-heading">
         <p className="doc-eyebrow">Connectors</p>
-        <h2 id="platforms-heading">Five connectors in the intended scope</h2>
+        <h2 id="platforms-heading">Six connectors in the intended scope</h2>
         <p>
-          Each connector uses the integration point its host offers. Targets are Windows, Linux and macOS, but none is yet
-          accepted on real hosts, so none is listed as a supported configuration.
+          Each connector uses the integration point its host offers. {HOST_ACCEPTANCE_STATEMENT}
         </p>
         <div className="doc-grid">
           {CONNECTORS.map((connector) => (
             <article key={connector.id} className="doc-card">
               <h3>{connector.name}</h3>
               <p style={{ fontSize: 13 }}>{connector.interception}.</p>
+              <p style={{ fontSize: 13, marginTop: 8 }}>
+                {connector.acceptance.preview ? <strong>{connector.acceptance.summary}</strong> : connector.acceptance.summary}
+              </p>
               <p style={{ fontSize: 13, marginTop: 8 }}>
                 <Link href={`/install#${connector.id}`}>Install steps and limits</Link>
               </p>

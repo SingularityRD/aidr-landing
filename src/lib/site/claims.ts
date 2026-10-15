@@ -8,9 +8,11 @@
 
 /**
  * Source: threats/*.yaml in the product repository, counted with
- * `grep -h '^- id:' threats/*.yaml | wc -l` (507 rules across 29 files, matching its CLAUDE.md).
+ * `grep -h '^- id:' threats/*.yaml | wc -l` and `ls threats/*.yaml | wc -l` on 2026-10-15
+ * (519 rules across 31 files, matching its CLAUDE.md; the product CI recomputes the figure in
+ * scripts/check-doc-claims.mjs). Pinned in src/lib/site/__tests__/product-facts.test.ts.
  */
-export const DETECTION_RULES = { count: 507, files: 29 } as const;
+export const DETECTION_RULES = { count: 519, files: 31 } as const;
 
 /**
  * Evaluation offer.
@@ -39,11 +41,20 @@ export type ConnectorFacts = {
   install: string;
   /** Known limits from the support matrix. */
   limits: string[];
+  /**
+   * Real-host acceptance, from docs/compatibility-matrix.md (generated from docs/evidence/real-host/*.json).
+   * `preview` connectors have no real-host record and must say so wherever they are sold.
+   */
+  acceptance: { preview: boolean; summary: string };
 };
 
+const TESTED_ONE_HOST = (version: string) =>
+  `Tested on one host version: ${version}, linux/x64, development build, 2026-10-11. Other versions and platforms are unverified.`;
+const PREVIEW = "Preview: no real-host acceptance evidence yet.";
+
 /**
- * The five connectors in the intended first-release scope (COM-010). Codex exists in
- * the repository but is outside that scope. None has real-host acceptance evidence yet.
+ * The six connectors in the sold scope (deploy/native/support-matrix.json#soldConnectorScope, COM-010).
+ * Four have one real-host acceptance record each (linux/x64 only); Cursor and VS Code are preview.
  */
 export const CONNECTORS: ConnectorFacts[] = [
   {
@@ -57,6 +68,7 @@ export const CONNECTORS: ConnectorFacts[] = [
       "Actions that never pass through the host hook (a separate shell, direct network access) are not seen.",
       "Hook timeouts can let the host continue; behaviour must be verified per host version.",
     ],
+    acceptance: { preview: false, summary: TESTED_ONE_HOST("Claude Code 2.1.296") },
   },
   {
     id: "cursor",
@@ -69,6 +81,7 @@ export const CONNECTORS: ConnectorFacts[] = [
       "Commands run outside the extension host (an external terminal) are not seen.",
       "Cursor cannot enforce an approval prompt on preToolUse, so AIDR maps an approval-needed verdict to a block.",
     ],
+    acceptance: { preview: true, summary: PREVIEW },
   },
   {
     id: "vscode",
@@ -81,6 +94,7 @@ export const CONNECTORS: ConnectorFacts[] = [
       "Commands run outside the extension host are not seen.",
       "Enforcement across current VS Code minor versions is not yet verified on real hosts.",
     ],
+    acceptance: { preview: true, summary: PREVIEW },
   },
   {
     id: "openclaw",
@@ -93,6 +107,7 @@ export const CONNECTORS: ConnectorFacts[] = [
       "Output inspection happens after execution and cannot undo a tool action.",
       "There is no in-session approval prompt; a blocked action stays blocked until an operator approves it out of band.",
     ],
+    acceptance: { preview: false, summary: TESTED_ONE_HOST("OpenClaw 2026.9.6") },
   },
   {
     id: "opencode",
@@ -104,14 +119,28 @@ export const CONNECTORS: ConnectorFacts[] = [
       "Provider streams and non-tool content are not inspected.",
       "There is no in-session approval prompt; a blocked action stays blocked until an operator approves it out of band.",
     ],
+    acceptance: { preview: false, summary: TESTED_ONE_HOST("OpenCode 1.18.32") },
+  },
+  {
+    id: "codex",
+    name: "Codex CLI",
+    interception: "Native PreToolUse command hook, with an optional UserPromptSubmit prompt check",
+    coverage: "Bash, apply_patch and MCP (mcp__*) tool calls matched by the packaged hook matcher. Other local function tools do not invoke the hook.",
+    install: "Approved signed version of the Codex package from the private registry, with the hooks registered in the Codex configuration and trusted in Codex /hooks.",
+    limits: [
+      "If the hook is disabled, untrusted, crashes or times out, Codex runs the call (the host fails open).",
+      "No tool-output inspection before the model is claimed for this host.",
+      "Hosted and specialised tool paths may bypass the host hook path.",
+    ],
+    acceptance: { preview: false, summary: TESTED_ONE_HOST("codex-cli 0.141.0") },
   },
 ];
 
 export const HOST_ACCEPTANCE_STATEMENT =
-  "Windows, Linux and macOS on x64 and arm64 are the intended target platforms. Real-host acceptance is not complete for any connector, so none of them is yet described as a supported configuration.";
+  "Claude Code, Codex CLI, OpenClaw and OpenCode each have a real-host acceptance record for one host version on Linux x64 (development build). Cursor and VS Code are preview, with no real-host acceptance evidence yet. Windows, macOS and arm64 are target platforms without real-host acceptance, and no macOS installer is offered. No release has been cut, so no connector is yet described as a supported configuration.";
 
 export const CONNECTOR_SCOPE_STATEMENT =
-  "Five connectors are in the intended first-release scope: Claude Code, Cursor, VS Code, OpenClaw and OpenCode. A Codex connector exists in the repository but is outside that scope.";
+  "Six connectors are in the intended first-release scope: Claude Code, Codex CLI, Cursor, VS Code, OpenClaw and OpenCode.";
 
 export const FAILURE_POLICY_STATEMENT =
   "Failure handling differs by layer. A single detection signal that errors is skipped and logged, and the call is still evaluated on the remaining signals. The connector entry points return a block on an internal error instead of silently allowing the call. Host-side behaviour when a hook is disabled, crashes or times out can still let a call through, which is why each connector lists it as a limit.";
