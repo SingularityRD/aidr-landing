@@ -1,0 +1,2 @@
+# Byte-for-byte signing vectors: never convert line endings.
+src/lib/vendor-admin/__tests__/fixtures/** -text
