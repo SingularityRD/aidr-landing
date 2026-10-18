@@ -8,11 +8,11 @@
 
 /**
  * Source: threats/*.yaml in the product repository, counted with
- * `grep -h '^- id:' threats/*.yaml | wc -l` and `ls threats/*.yaml | wc -l` on 2026-10-15
- * (519 rules across 31 files, matching its CLAUDE.md; the product CI recomputes the figure in
+ * `grep -h '^- id:' threats/*.yaml | wc -l` and `ls threats/*.yaml | wc -l` on 2026-10-18
+ * (521 rules across 31 files, matching its CLAUDE.md; the product CI recomputes the figure in
  * scripts/check-doc-claims.mjs). Pinned in src/lib/site/__tests__/product-facts.test.ts.
  */
-export const DETECTION_RULES = { count: 519, files: 31 } as const;
+export const DETECTION_RULES = { count: 521, files: 31 } as const;
 
 /**
  * Evaluation offer.

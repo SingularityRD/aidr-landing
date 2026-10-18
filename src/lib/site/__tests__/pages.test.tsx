@@ -23,7 +23,7 @@ vi.mock("@/lib/site/health", async () => ({
 type PageModule = { default: (props?: never) => ReactElement | Promise<ReactElement>; metadata?: { alternates?: { canonical?: string }; title?: unknown } };
 
 const PAGES: Array<{ path: string; load: () => Promise<PageModule>; h1: RegExp }> = [
-  { path: "/", load: () => import("@/app/page") as Promise<PageModule>, h1: /detection layer/i },
+  { path: "/", load: () => import("@/app/page") as Promise<PageModule>, h1: /Prevention for the/i },
   { path: "/pricing", load: () => import("@/app/(public)/pricing/page") as Promise<PageModule>, h1: /14 days/i },
   { path: "/enterprise", load: () => import("@/app/(public)/enterprise/page") as Promise<PageModule>, h1: /Enterprise/i },
   { path: "/install", load: () => import("@/app/(public)/install/page") as Promise<PageModule>, h1: /Install/i },

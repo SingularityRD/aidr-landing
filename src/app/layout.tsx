@@ -16,7 +16,7 @@ import "./globals.css";
 import "./site.css";
 
 const DESCRIPTION =
-  "Singularity AIDR checks the tool calls of AI coding agents (shell commands, file operations, web requests, MCP calls) against detection rules and policy. Offered as a 14-day, 1-agent controlled evaluation.";
+  "Singularity AIDR is the detection layer between AI agents and what they touch: it checks shell commands, file operations, web requests and MCP calls before they run, and masks sensitive data before it reaches AI chat. Offered as a 14-day, 1-agent controlled evaluation.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),

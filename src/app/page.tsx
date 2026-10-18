@@ -10,73 +10,102 @@ import {
   HOST_ACCEPTANCE_STATEMENT,
   PRICING_STATEMENT,
 } from "@/lib/site/claims";
+import "./home.css";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-const pipeline = [
-  { id: "tool-received", label: "Tool call received", detail: "Shell, file, web and MCP calls the host routes through its hook", kind: "input" },
-  { id: "extract-artifacts", label: "Extract artifacts", detail: "Commands, URLs, file paths, package names, content", kind: "step" },
-  { id: "check-allowlist", label: "Allowlist and cache", detail: "Exact-artifact allowlist and recent verdicts", kind: "decision" },
-  { id: "run-heuristics", label: "Run rules", detail: `${DETECTION_RULES.count} YAML threat rules in ${DETECTION_RULES.files} files, plus policy`, kind: "step" },
-  { id: "query-reputation", label: "Optional reputation checks", detail: "URL, file hash and package checks, only when enabled", kind: "step" },
-  { id: "decision-engine", label: "Decision engine", detail: "Merge signals; deny wins over ask, ask wins over allow", kind: "decision" },
-  { id: "verdict", label: "Verdict", detail: "Allow, ask (block pending human approval) or deny", kind: "output" },
+/** Illustrative verdict stream for the hero. Benign examples only; not live data. */
+const stream = [
+  { agent: "Claude Code", action: "Bash", target: "pnpm test", verdict: "allow" },
+  { agent: "Cursor", action: "Write", target: "src/billing/invoice.ts", verdict: "allow" },
+  { agent: "Codex", action: "Bash", target: "curl … | sh", verdict: "deny", why: "Remote script piped to a shell" },
+  { agent: "OpenCode", action: "Read", target: "~/.aws/credentials", verdict: "deny", why: "Cloud credential read" },
+  { agent: "Claude Code", action: "mcp__github__merge", target: "release/1.4", verdict: "ask", why: "Held for an operator" },
+  { agent: "Browser", action: "Prompt", target: "chatgpt.com", verdict: "masked", why: "IBAN and T.C. kimlik replaced" },
+] as const;
+
+const surfaces = [
+  "Claude Code",
+  "Cursor",
+  "VS Code",
+  "Codex CLI",
+  "OpenCode",
+  "OpenClaw",
+  "MCP servers",
+  "ChatGPT",
+  "Gemini",
+  "Claude",
+  "Copilot",
+  "Perplexity",
 ];
 
-const layers = [
+const pillars = [
   {
-    title: "Local rules",
-    desc: `${DETECTION_RULES.count} data-driven YAML rules match dangerous commands, sensitive file paths, credential exposure, obfuscation and prompt-injection patterns. They run on the developer machine.`,
+    id: "agents",
+    eyebrow: "Agent Guard",
+    title: "Every tool call, judged before it runs.",
+    body: `Connectors sit inside the agent host and check shell commands, file reads and writes, web fetches and MCP calls against ${DETECTION_RULES.count} readable rules and your policy. Risky calls are blocked or held for a person.`,
+    points: ["Pre-execution decisions: allow, ask, deny", "Session containment after a critical block", "Tool-output inspection before the model reads it"],
   },
   {
-    title: "Policy",
-    desc: "Filesystem, network, MCP and tool rules from local configuration or a signed policy published from the dashboard.",
+    id: "mcp",
+    eyebrow: "MCP Gateway",
+    title: "Trust the tools, not just the model.",
+    body: "A loopback gateway between agents and MCP servers. Tool definitions are signed and pinned, drift is caught, and results are inspected before they reach the model.",
+    points: ["Signed tool manifests and drift detection", "Operator-only approval, never an agent tool", "Response blocking for secrets and injection"],
   },
   {
-    title: "Package and plugin checks",
-    desc: "Package-install commands are checked against registry metadata, age heuristics and offline intel. Installed plugins are scanned at session start.",
+    id: "people",
+    eyebrow: "Browser Guard + Privacy",
+    title: "People use AI too. Their data stays theirs.",
+    body: "A Chrome, Edge and Firefox extension masks personal data and secrets before prompts, pastes and files reach AI chat products, and restores the originals only on the user's screen.",
+    points: ["Turkish and English personal data with checksum validation", "Exact-data match for your own records", "Shadow-AI discovery and acceptable-use notices"],
   },
   {
-    title: "Optional reputation",
-    desc: "URL, file-hash and package reputation lookups when enabled. They need a configured first-party endpoint and an unavailable lookup is never reported as clean.",
+    id: "command",
+    eyebrow: "Command Center",
+    title: "One policy. Every agent. Full evidence.",
+    body: "Publish policy to the fleet, review incidents, approve held actions out of band and export a tamper-evident audit trail to your SIEM.",
+    points: ["Signed policy rollout with two-person approval", "SSO, SCIM, roles and IP allowlists", "Hash-chained admin audit and signed response chain"],
   },
 ];
 
-const features = [
-  { title: "Tool-call inspection", desc: "Shell commands, file reads and writes, web fetches and MCP calls, for the tools each host routes through its hook." },
-  { title: "Block pending approval", desc: "A call that needs a human decision is blocked. No approval tool is exposed to the agent, so an injected prompt cannot approve its own block." },
-  { title: "Device authorization", desc: "Enrollment uses short-lived, single-use codes that a signed-in user approves in the browser." },
-  { title: "Incident correlation", desc: "Repeated denials and suspicious retries are grouped into cases with owner, status and evidence." },
-  { title: "Dashboard and policy rollout", desc: "Registered agents, events, incidents, policy publication with optional two-person approval, and drift tracking." },
-  { title: "Signed webhook export", desc: "Send deny and critical events to a webhook you control, with delivery failures tracked and replayable." },
-  { title: "Output inspection", desc: "Tool output can be checked for leaked credentials and injection after the tool runs. This is a post-execution step and cannot undo the action." },
-  { title: "MCP and plugin inventory", desc: "Local MCP server configurations and installed plugins are discovered and checked at session start." },
-  { title: "Credential scrub", desc: "Bearer tokens, API keys and secret URL parameters are removed from events before they leave the machine." },
+const loop = [
+  { step: "01", title: "Observe", desc: "The connector receives the call the agent is about to make: the command, the path, the URL, the MCP tool and its arguments." },
+  { step: "02", title: "Decide", desc: "Rules, policy, package and supply-chain checks and session context are merged into one verdict. Deny wins over ask, ask over allow." },
+  { step: "03", title: "Enforce", desc: "The host is told to run, block or wait. A held call needs a person; the agent never receives a tool that could approve itself." },
+  { step: "04", title: "Prove", desc: "Every verdict is written to a local audit log and, when managed, to a signed chain your auditors can verify byte for byte." },
 ];
 
-const categories = [
-  { name: "Remote code execution", example: "curl piped to a shell, reverse shells" },
-  { name: "Credential theft", example: "SSH keys, .env files, cloud credentials" },
-  { name: "Supply-chain attacks", example: "Typosquatted packages, dependency confusion" },
-  { name: "Prompt injection", example: "Direct and indirect injection, system prompt extraction" },
-  { name: "Data exfiltration", example: "Unexpected network calls and uploads" },
-  { name: "Destructive operations", example: "Recursive deletes, disk wipes" },
-  { name: "Persistence", example: "Cron, systemd, launch agents, shell startup files" },
-  { name: "Obfuscation", example: "Encoded payloads and hidden commands" },
-  { name: "Plugin tampering", example: "Malicious or modified plugins and extensions" },
-  { name: "Privilege escalation", example: "sudo abuse, setuid, token theft" },
+const principles = [
+  {
+    title: "An approval the agent cannot forge",
+    desc: "Held actions are released by an operator, out of band. No connector exposes an approval tool, so a prompt-injected agent cannot unblock itself.",
+  },
+  {
+    title: "Rules you can read",
+    desc: `Detection is data: ${DETECTION_RULES.count} YAML rules in ${DETECTION_RULES.files} files, each mapped to OWASP LLM and MITRE ATLAS. Review them, extend them, ship your own.`,
+  },
+  {
+    title: "Runs where your data must stay",
+    desc: "Local mode needs no account. Managed mode runs in our cloud, in your Kubernetes cluster with Helm, or fully air-gapped with a signed offline license.",
+  },
+  {
+    title: "Blocks on failure",
+    desc: "Connector entry points return a block on an internal error instead of letting the call through. A skipped signal is logged and never reported as clean.",
+  },
 ];
 
 const faqs = [
   {
     q: "What is AIDR?",
-    a: "Singularity AIDR (AI Agent Detection & Response) checks the tool calls AI coding agents make, such as shell commands, file operations and web requests, against rules and policy before they run, and blocks or flags risky ones.",
+    a: "Singularity AIDR (AI Agent Detection & Response) is a control layer between AI agents and what they touch. It checks the tool calls coding agents make, inspects MCP traffic, and masks sensitive data people send to AI chat, before anything runs or leaves.",
   },
   {
     q: "Does it need a cloud account?",
-    a: "No. Detection and policy run locally and a fresh install enforces without an account. The managed dashboard is an optional layer for fleets. Optional reputation lookups, version checks and managed telemetry are separate outbound paths that can be turned off.",
+    a: "No. Detection and policy run on the device and a fresh install enforces without an account. The managed Command Center is an optional layer for fleets.",
   },
   {
     q: "Which agents does it support?",
@@ -84,15 +113,11 @@ const faqs = [
   },
   {
     q: "Can an agent get around it?",
-    a: "Yes, in some cases. AIDR only sees actions that pass through the host's hook. A disabled hook, a separate terminal, or direct network access that never becomes a tool call is not seen. The install page lists the known limits for each connector.",
-  },
-  {
-    q: "Can it break my agent?",
-    a: "A failing detection signal is skipped and logged. Connector entry points return a block on an internal error rather than silently allowing the call, so a fault can stop an agent action. Blocks pending approval stay blocked until an operator approves them.",
+    a: "In some cases, yes. AIDR sees the actions that pass through the host's hook. A disabled hook, a separate terminal, or network access that never becomes a tool call is not seen. The install page lists the known limits for each connector.",
   },
   {
     q: "How is data handled?",
-    a: "Detection runs on the device and does not upload source files or full prompts. Optional features send specific data, such as URLs, package names or file hashes, and managed telemetry defaults to hashes. The privacy page is a draft pending legal review and lists each path.",
+    a: "Detection runs on the device and does not upload source files or full prompts. Optional features send specific data, such as URLs, package names or file hashes, and managed telemetry defaults to hashes. The privacy page lists each path.",
   },
   {
     q: "What does it cost?",
@@ -100,199 +125,221 @@ const faqs = [
   },
   {
     q: "Is it certified?",
-    a: "No. There is no SOC 2 report, ISO 27001 certificate or independent penetration test yet. The trust center lists what is open.",
+    a: "Not yet. There is no SOC 2 report, ISO 27001 certificate or independent penetration test. The trust center lists what is verified and what is open.",
   },
 ];
 
-const kindColor: Record<string, string> = {
-  input: "#1d4ed8",
-  step: "#6d28d9",
-  decision: "#b45309",
-  output: "#15803d",
-};
+const verdictLabel: Record<string, string> = { allow: "Allowed", deny: "Blocked", ask: "Held", masked: "Masked" };
 
 export default function Home() {
   return (
-    <PageShell className="home-main page-main">
-      <section className="hero-row" aria-labelledby="hero-heading" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "center" }}>
-        <div className="doc-section" style={{ marginTop: 0, padding: "36px 32px" }}>
-          <p className="doc-eyebrow">AI Agent Detection &amp; Response</p>
-          <h1 id="hero-heading" className="doc-title">
-            A detection layer for the tool calls your AI coding agents make.
-          </h1>
-          <p className="doc-lead">
-            Singularity AIDR checks shell commands, file operations, web requests and MCP calls against {DETECTION_RULES.count}{" "}
-            rules and your policy, and blocks or flags risky ones. Detection runs on the developer machine. It is offered
-            today as a {EVALUATION.label}.
+    <PageShell className="lp page-main">
+      <section className="lp-hero" aria-labelledby="hero-heading">
+        <div className="lp-hero-copy">
+          <p className="lp-eyebrow">
+            <span className="lp-dot" aria-hidden="true" /> AI Agent Detection &amp; Response
           </p>
-          <HeroCtas secondaryHref="/install" secondaryLabel="See coverage and limits" />
+          <h1 id="hero-heading" className="lp-display">
+            Prevention for the <em>agentic</em> workforce.
+          </h1>
+          <p className="lp-lead">
+            Your engineers now work alongside AI agents that run commands, edit code, call tools and browse on their
+            behalf. Singularity AIDR is the detection layer between those agents and everything they touch, and it
+            stops risky actions before they happen.
+          </p>
+          <HeroCtas secondaryHref="#features" secondaryLabel="Explore the platform" />
+          <p className="lp-fineprint">
+            In controlled evaluation. <Link href="/trust">See what is verified and what is open.</Link>
+          </p>
         </div>
 
-        <div
-          className="doc-card"
-          style={{ fontFamily: "var(--font-geist-mono), monospace", fontSize: 12, lineHeight: "20px" }}
-          role="group"
-          aria-label="Detection pipeline"
-        >
-          <p className="doc-eyebrow">Detection pipeline</p>
-          <ol style={{ listStyle: "none" }}>
-            {pipeline.map((step) => (
-              <li key={step.id} style={{ marginBottom: 8 }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span
-                    aria-hidden="true"
-                    style={{ width: 8, height: 8, borderRadius: "50%", background: kindColor[step.kind], flexShrink: 0 }}
-                  />
-                  <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{step.label}</span>
+        <div className="lp-console" role="group" aria-label="Illustrative verdict stream">
+          <div className="lp-console-bar">
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+            <p>aidr · verdicts</p>
+          </div>
+          <ol className="lp-stream">
+            {stream.map((row, i) => (
+              <li key={`${row.agent}-${row.target}`} className={`lp-row lp-row-${row.verdict}`} style={{ animationDelay: `${i * 0.35}s` }}>
+                <div className="lp-row-main">
+                  <span className="lp-agent">{row.agent}</span>
+                  <span className="lp-action">{row.action}</span>
+                  <code className="lp-target">{row.target}</code>
                 </div>
-                <div style={{ color: "var(--text-secondary)", marginLeft: 16, fontSize: 12 }}>{step.detail}</div>
+                <div className="lp-row-side">
+                  <span className={`lp-badge lp-badge-${row.verdict}`}>{verdictLabel[row.verdict]}</span>
+                  {"why" in row ? <span className="lp-why">{row.why}</span> : null}
+                </div>
               </li>
             ))}
           </ol>
+          <p className="lp-console-note">Illustrative example, not live data.</p>
         </div>
       </section>
 
-      <div className="callout callout-info" role="note" style={{ marginTop: 24 }}>
-        <strong>Where this stands.</strong> AIDR is in controlled evaluation and no release has been cut. Real-host acceptance
-        covers one host version on Linux x64 for four connectors and none for Cursor or VS Code, there is no independent
-        security assessment or certification yet, and there is no SLA. The{" "}
-        <Link href="/trust">trust center</Link> lists what is verified and what is open.
-      </div>
-
-      <section id="how-it-works" className="doc-section" aria-labelledby="how-heading">
-        <p className="doc-eyebrow">How it works</p>
-        <h2 id="how-heading">Four signals, one verdict</h2>
-        <p>
-          Each tool call passes through independent checks. They return allow, ask or deny, and the decision engine merges
-          them with deny over ask over allow.
-        </p>
-        <div className="doc-grid">
-          {layers.map((layer) => (
-            <article key={layer.title} className="doc-card">
-              <h3>{layer.title}</h3>
-              <p>{layer.desc}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="features" className="doc-section" aria-labelledby="features-heading">
-        <p className="doc-eyebrow">Capabilities</p>
-        <h2 id="features-heading">What the product does</h2>
-        <div className="doc-grid">
-          {features.map((feature) => (
-            <article key={feature.title} className="doc-card">
-              <h3>{feature.title}</h3>
-              <p>{feature.desc}</p>
-            </article>
-          ))}
-        </div>
-        <p style={{ marginTop: 14 }}>
-          Enterprise options such as SSO, SCIM, SIEM export, audit export and self-hosting are labelled as implemented,
-          partial or roadmap on the <Link href="/enterprise">enterprise page</Link>.
-        </p>
-      </section>
-
-      <section id="threats" className="doc-section" aria-labelledby="threats-heading">
-        <p className="doc-eyebrow">Rule coverage</p>
-        <h2 id="threats-heading">
-          {DETECTION_RULES.count} rules in {DETECTION_RULES.files} YAML files
-        </h2>
-        <p>
-          All detection logic is data: rules are YAML files that can be reviewed and updated independently of the code.
-          A rule count is not an effectiveness measure; independent false-positive and evasion measurements are still
-          open.
-        </p>
-        <ul className="doc-grid" style={{ listStyle: "none", marginLeft: 0 }}>
-          {categories.map((category) => (
-            <li key={category.name} className="doc-card" style={{ padding: "12px 16px" }}>
-              <strong style={{ color: "var(--text-primary)" }}>{category.name}</strong>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{category.example}</div>
-            </li>
+      <section className="lp-surfaces" aria-label="Where AIDR works">
+        <p>Works where your teams already build</p>
+        <ul>
+          {surfaces.map((s) => (
+            <li key={s}>{s}</li>
           ))}
         </ul>
       </section>
 
-      <section id="platforms" className="doc-section" aria-labelledby="platforms-heading">
-        <p className="doc-eyebrow">Connectors</p>
-        <h2 id="platforms-heading">Six connectors in the intended scope</h2>
-        <p>
-          Each connector uses the integration point its host offers. {HOST_ACCEPTANCE_STATEMENT}
-        </p>
-        <div className="doc-grid">
-          {CONNECTORS.map((connector) => (
-            <article key={connector.id} className="doc-card">
-              <h3>{connector.name}</h3>
-              <p style={{ fontSize: 13 }}>{connector.interception}.</p>
-              <p style={{ fontSize: 13, marginTop: 8 }}>
-                {connector.acceptance.preview ? <strong>{connector.acceptance.summary}</strong> : connector.acceptance.summary}
-              </p>
-              <p style={{ fontSize: 13, marginTop: 8 }}>
-                <Link href={`/install#${connector.id}`}>Install steps and limits</Link>
-              </p>
+      <section className="lp-thesis" aria-labelledby="thesis-heading">
+        <p className="lp-eyebrow">Why now</p>
+        <h2 id="thesis-heading" className="lp-h2">
+          Agents act with your people&apos;s privileges. Security still watches only the people.
+        </h2>
+        <div className="lp-thesis-grid">
+          <article>
+            <h3>Actions, not alerts</h3>
+            <p>
+              Endpoint and network tools report what already happened. An agent can read a credential, push a branch
+              and call an API in seconds. The decision has to be made before the action, at the tool call.
+            </p>
+          </article>
+          <article>
+            <h3>Intent hides in context</h3>
+            <p>
+              The same command is routine in one session and an exfiltration step in another. AIDR follows the session:
+              what was read, what was fetched, what is about to leave.
+            </p>
+          </article>
+          <article>
+            <h3>The prompt is an attack surface</h3>
+            <p>
+              Repositories, web pages and MCP results can carry instructions. AIDR inspects what agents read as well as
+              what they do, and never lets an agent approve its own block.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="features" className="lp-platform" aria-labelledby="platform-heading">
+        <p className="lp-eyebrow">The platform</p>
+        <h2 id="platform-heading" className="lp-h2">
+          One control layer for agents, tools and the people who use them.
+        </h2>
+        <div className="lp-pillars">
+          {pillars.map((p) => (
+            <article key={p.id} id={p.id} className="lp-pillar">
+              <p className="lp-pillar-eyebrow">{p.eyebrow}</p>
+              <h3>{p.title}</h3>
+              <p>{p.body}</p>
+              <ul>
+                {p.points.map((pt) => (
+                  <li key={pt}>{pt}</li>
+                ))}
+              </ul>
             </article>
           ))}
         </div>
       </section>
 
-      <section id="security" className="doc-section" aria-labelledby="security-heading">
-        <p className="doc-eyebrow">Security and privacy</p>
-        <h2 id="security-heading">What stays local and what does not</h2>
-        <div className="doc-grid">
-          <article className="doc-card">
-            <h3>Local by default</h3>
-            <p>Rule and policy evaluation run on the device. Local detection does not upload source files or full prompts.</p>
+      <section id="how-it-works" className="lp-loop" aria-labelledby="loop-heading">
+        <p className="lp-eyebrow">How it works</p>
+        <h2 id="loop-heading" className="lp-h2">
+          Observe. Decide. Enforce. Prove.
+        </h2>
+        <ol className="lp-loop-grid">
+          {loop.map((s) => (
+            <li key={s.step}>
+              <span className="lp-step">{s.step}</span>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="lp-principles" aria-labelledby="principles-heading">
+        <p className="lp-eyebrow">Built differently</p>
+        <h2 id="principles-heading" className="lp-h2">
+          Security that holds up when the agent is the one being attacked.
+        </h2>
+        <div className="lp-principles-grid">
+          {principles.map((p) => (
+            <article key={p.title}>
+              <h3>{p.title}</h3>
+              <p>{p.desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="platforms" className="lp-connectors" aria-labelledby="connectors-heading">
+        <p className="lp-eyebrow">Connectors</p>
+        <h2 id="connectors-heading" className="lp-h2">
+          Six agent hosts in scope. Honest about each one.
+        </h2>
+        <p className="lp-section-lead">Each connector uses the integration point its host offers. {HOST_ACCEPTANCE_STATEMENT}</p>
+        <div className="lp-connector-grid">
+          {CONNECTORS.map((connector) => (
+            <article key={connector.id}>
+              <h3>{connector.name}</h3>
+              <p>{connector.interception}.</p>
+              <p className={connector.acceptance.preview ? "lp-preview" : "lp-muted"}>{connector.acceptance.summary}</p>
+              <Link href={`/install#${connector.id}`}>Install steps and limits →</Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-deploy" aria-labelledby="deploy-heading">
+        <div>
+          <p className="lp-eyebrow">Deployment</p>
+          <h2 id="deploy-heading" className="lp-h2">
+            Your cloud, our cloud, or no cloud at all.
+          </h2>
+        </div>
+        <div className="lp-deploy-grid">
+          <article>
+            <h3>Local</h3>
+            <p>Connectors and Browser Guard decide on the device. No account is needed for detection.</p>
           </article>
-          <article className="doc-card">
-            <h3>Optional outbound paths</h3>
-            <p>
-              Reputation lookups, version checks, deep scans, alert webhooks and managed telemetry each send specific data
-              and can be disabled. They are listed in the privacy draft.
-            </p>
+          <article>
+            <h3>Managed cloud</h3>
+            <p>Command Center, device enrollment, central policy, audit export, SSO and SCIM.</p>
           </article>
-          <article className="doc-card">
-            <h3>Failure handling</h3>
-            <p>Failure policy differs by layer: detection signals are skipped on error, connector entry points block, security controls fail closed.</p>
-          </article>
-          <article className="doc-card">
-            <h3>Honest assurance status</h3>
-            <p>
-              No certification is claimed. Read the <Link href="/security">security overview</Link> and the{" "}
-              <Link href="/trust">trust center</Link>.
-            </p>
+          <article>
+            <h3>Self-hosted and air-gapped</h3>
+            <p>Docker Compose or Kubernetes with Helm, with signed offline licenses and intel packs.</p>
           </article>
         </div>
       </section>
 
-      <section id="pricing" className="doc-section" aria-labelledby="pricing-heading">
-        <p className="doc-eyebrow">Evaluation and pricing</p>
-        <h2 id="pricing-heading">Start with a 14-day evaluation</h2>
+      <section id="faq" className="lp-faq" aria-labelledby="faq-heading">
+        <p className="lp-eyebrow">FAQ</p>
+        <h2 id="faq-heading" className="lp-h2">
+          Questions buyers ask first
+        </h2>
+        <div className="lp-faq-list">
+          {faqs.map((faq) => (
+            <details key={faq.q}>
+              <summary>{faq.q}</summary>
+              <p>{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-cta" aria-labelledby="cta-heading">
+        <h2 id="cta-heading" className="lp-display lp-display-sm">
+          Put a control layer between your agents and your company.
+        </h2>
         <p>
           {EVALUATION.sentence} {PRICING_STATEMENT}
         </p>
-        <div className="btn-row">
+        <div className="btn-row lp-cta-row">
           <Link href="/pilot" className="btn">
             Apply for the evaluation
           </Link>
-          <Link href="/pricing" className="btn btn-secondary">
-            Evaluation and pricing
-          </Link>
           <Link href="/contact?topic=sales" className="btn btn-secondary">
-            Contact sales
+            Talk to the team
           </Link>
-        </div>
-      </section>
-
-      <section id="faq" className="doc-section" aria-labelledby="faq-heading">
-        <p className="doc-eyebrow">FAQ</p>
-        <h2 id="faq-heading">Frequently asked questions</h2>
-        <div style={{ display: "grid", gap: 10 }}>
-          {faqs.map((faq) => (
-            <details key={faq.q} className="doc-card" style={{ padding: "14px 18px" }}>
-              <summary style={{ fontSize: 15, fontWeight: 500, color: "var(--text-primary)", cursor: "pointer" }}>{faq.q}</summary>
-              <p style={{ marginTop: 10 }}>{faq.a}</p>
-            </details>
-          ))}
         </div>
       </section>
     </PageShell>

@@ -8,7 +8,7 @@ import { CONNECTORS, CONNECTOR_SCOPE_STATEMENT, DETECTION_RULES, HOST_ACCEPTANCE
 
 describe("product facts", () => {
   it("quotes the current detection rule figures (threats/*.yaml, 2026-10-15)", () => {
-    expect(DETECTION_RULES).toEqual({ count: 519, files: 31 });
+    expect(DETECTION_RULES).toEqual({ count: 521, files: 31 });
   });
 
   it("lists the six sold connectors, each named in the scope statement", () => {
